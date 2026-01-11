@@ -21,13 +21,14 @@
   },
   "homepage": "https://github.com/PrimeDaniel/Fiks#readme",
   "dependencies": {
-    "@react-native-async-storage/async-storage": "^2.2.0",
+    "@expo/metro-runtime": "~4.0.1",
+    "@react-native-async-storage/async-storage": "1.23.1",
     "@supabase/supabase-js": "^2.90.1",
     "expo": "^52.0.0",
     "expo-status-bar": "~2.0.0",
     "react": "18.3.1",
     "react-dom": "18.3.1",
-    "react-native": "0.76.6",
+    "react-native": "0.76.9",
     "react-native-url-polyfill": "^3.0.0",
     "react-native-web": "~0.19.13"
   },
