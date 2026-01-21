@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
     StyleSheet,
     Text,
@@ -7,7 +7,6 @@ import {
     TouchableOpacity,
     ActivityIndicator,
     Alert,
-    Dimensions,
     Platform,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
@@ -126,8 +125,6 @@ const MOCK_JOBS: Job[] = [
     }
 ];
 
-const { width } = Dimensions.get('window');
-
 const HomeScreen: React.FC<Props> = ({ navigation }) => {
     const [jobs, setJobs] = useState<Job[]>([]);
     const [loading, setLoading] = useState(true);
@@ -185,12 +182,8 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
         }, [selectedCategory])
     );
 
-    const handleAcceptJob = async (jobId: string) => {
-        Alert.alert(
-            '🎉 Coming Soon!', 
-            'Accept Job functionality will be available in the next update.',
-            [{ text: 'Got it', style: 'default' }]
-        );
+    const handleJobPress = (job: Job) => {
+        navigation.navigate('JobDetail', { job });
     };
 
     const renderHeader = () => (
@@ -202,6 +195,15 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
                     <Text style={styles.logoText}>Fiks</Text>
                 </View>
                 <View style={styles.navButtons}>
+                    {user && (
+                        <TouchableOpacity
+                            style={styles.myJobsButton}
+                            onPress={() => navigation.navigate('MyJobs')}
+                        >
+                            <Text style={styles.myJobsIcon}>📋</Text>
+                            <Text style={styles.myJobsText}>My Jobs</Text>
+                        </TouchableOpacity>
+                    )}
                     {!user ? (
                         <TouchableOpacity
                             style={styles.loginButton}
@@ -295,7 +297,7 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
                         <JobCard
                             job={item}
                             isPro={isPro}
-                            onAccept={handleAcceptJob}
+                            onPress={handleJobPress}
                             index={index}
                         />
                     )}
@@ -379,10 +381,27 @@ const styles = StyleSheet.create({
     navButtons: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 12,
+        gap: 8,
+    },
+    myJobsButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: 12,
+        paddingVertical: 8,
+        borderRadius: 12,
+        backgroundColor: '#EEF2FF',
+    },
+    myJobsIcon: {
+        fontSize: 14,
+        marginRight: 4,
+    },
+    myJobsText: {
+        fontSize: 13,
+        fontWeight: '600',
+        color: '#6366F1',
     },
     loginButton: {
-        paddingHorizontal: 16,
+        paddingHorizontal: 14,
         paddingVertical: 10,
         borderRadius: 12,
         backgroundColor: '#F1F5F9',
@@ -406,7 +425,7 @@ const styles = StyleSheet.create({
     postButton: {
         flexDirection: 'row',
         alignItems: 'center',
-        paddingHorizontal: 16,
+        paddingHorizontal: 14,
         paddingVertical: 10,
         borderRadius: 12,
         backgroundColor: '#6366F1',

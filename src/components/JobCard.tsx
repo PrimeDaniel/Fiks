@@ -1,11 +1,12 @@
 import React from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, Animated } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity } from 'react-native';
 import { Job } from '../types/database';
 
 type Props = {
     job: Job;
     isPro: boolean;
     onAccept?: (jobId: string) => void;
+    onPress?: (job: Job) => void;
     index?: number;
 };
 
@@ -38,14 +39,24 @@ const getAvatarColor = (name: string): string => {
     return colors[index];
 };
 
-const JobCard: React.FC<Props> = ({ job, isPro, onAccept, index = 0 }) => {
+const JobCard: React.FC<Props> = ({ job, isPro, onAccept, onPress, index = 0 }) => {
     const categoryConfig = CATEGORY_CONFIG[job.category] || { icon: '📋', color: '#6B7280', bgColor: '#F3F4F6' };
     const timeAgo = getTimeAgo(job.created_at);
     const avatarColor = getAvatarColor(job.profile?.full_name || 'U');
     const initials = job.profile?.full_name?.split(' ').map(n => n[0]).join('').toUpperCase() || 'U';
 
+    const handlePress = () => {
+        if (onPress) {
+            onPress(job);
+        }
+    };
+
     return (
-        <View style={styles.card}>
+        <TouchableOpacity 
+            style={styles.card} 
+            onPress={handlePress}
+            activeOpacity={0.95}
+        >
             {/* Card Header - User Info */}
             <View style={styles.cardHeader}>
                 <View style={styles.userSection}>
@@ -103,32 +114,28 @@ const JobCard: React.FC<Props> = ({ job, isPro, onAccept, index = 0 }) => {
             {/* Card Footer - Actions */}
             <View style={styles.cardFooter}>
                 <View style={styles.statsRow}>
-                    <TouchableOpacity style={styles.actionButton}>
+                    <View style={styles.actionButton}>
                         <Text style={styles.actionIcon}>💬</Text>
                         <Text style={styles.actionText}>Message</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity style={styles.actionButton}>
+                    </View>
+                    <View style={styles.actionButton}>
                         <Text style={styles.actionIcon}>📌</Text>
                         <Text style={styles.actionText}>Save</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity style={styles.actionButton}>
+                    </View>
+                    <View style={styles.actionButton}>
                         <Text style={styles.actionIcon}>↗️</Text>
                         <Text style={styles.actionText}>Share</Text>
-                    </TouchableOpacity>
+                    </View>
                 </View>
 
-                {isPro && onAccept && (
-                    <TouchableOpacity
-                        style={styles.acceptButton}
-                        onPress={() => onAccept(job.id)}
-                        activeOpacity={0.85}
-                    >
-                        <Text style={styles.acceptButtonIcon}>✨</Text>
-                        <Text style={styles.acceptButtonText}>Accept Job</Text>
-                    </TouchableOpacity>
+                {isPro && (
+                    <View style={styles.viewDetailsButton}>
+                        <Text style={styles.viewDetailsIcon}>👀</Text>
+                        <Text style={styles.viewDetailsText}>Tap to view & bid</Text>
+                    </View>
                 )}
             </View>
-        </View>
+        </TouchableOpacity>
     );
 };
 
@@ -301,7 +308,7 @@ const styles = StyleSheet.create({
     statsRow: {
         flexDirection: 'row',
         justifyContent: 'space-around',
-        marginBottom: 12,
+        marginBottom: 0,
     },
     actionButton: {
         flexDirection: 'row',
@@ -318,28 +325,23 @@ const styles = StyleSheet.create({
         fontWeight: '600',
         color: '#64748B',
     },
-    acceptButton: {
+    viewDetailsButton: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: '#6366F1',
-        paddingVertical: 14,
-        borderRadius: 14,
-        shadowColor: '#6366F1',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.35,
-        shadowRadius: 12,
-        elevation: 6,
+        backgroundColor: '#EEF2FF',
+        paddingVertical: 12,
+        borderRadius: 12,
+        marginTop: 12,
     },
-    acceptButtonIcon: {
-        fontSize: 18,
+    viewDetailsIcon: {
+        fontSize: 16,
         marginRight: 8,
     },
-    acceptButtonText: {
-        color: '#FFFFFF',
-        fontSize: 16,
-        fontWeight: '700',
-        letterSpacing: 0.5,
+    viewDetailsText: {
+        fontSize: 14,
+        fontWeight: '600',
+        color: '#6366F1',
     },
 });
 
