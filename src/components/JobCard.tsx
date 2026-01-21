@@ -1,188 +1,345 @@
 import React from 'react';
-import { StyleSheet, Text, View, Image, TouchableOpacity } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, Animated } from 'react-native';
 import { Job } from '../types/database';
 
 type Props = {
     job: Job;
     isPro: boolean;
     onAccept?: (jobId: string) => void;
+    index?: number;
 };
 
-const JobCard: React.FC<Props> = ({ job, isPro, onAccept }) => {
-    const formattedDate = new Date(job.created_at).toLocaleDateString();
+const CATEGORY_CONFIG: Record<string, { icon: string; color: string; bgColor: string }> = {
+    'Electricity': { icon: '⚡', color: '#F59E0B', bgColor: '#FFFBEB' },
+    'Plumbing': { icon: '🔧', color: '#3B82F6', bgColor: '#EFF6FF' },
+    'Assembly': { icon: '🔨', color: '#F97316', bgColor: '#FFF7ED' },
+    'Moving': { icon: '📦', color: '#10B981', bgColor: '#ECFDF5' },
+    'Painting': { icon: '🎨', color: '#EC4899', bgColor: '#FDF2F8' },
+};
+
+const getTimeAgo = (dateString: string): string => {
+    const now = new Date();
+    const date = new Date(dateString);
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins}m ago`;
+    if (diffHours < 24) return `${diffHours}h ago`;
+    if (diffDays < 7) return `${diffDays}d ago`;
+    return date.toLocaleDateString();
+};
+
+const getAvatarColor = (name: string): string => {
+    const colors = ['#6366F1', '#8B5CF6', '#EC4899', '#F59E0B', '#10B981', '#3B82F6'];
+    const index = name.charCodeAt(0) % colors.length;
+    return colors[index];
+};
+
+const JobCard: React.FC<Props> = ({ job, isPro, onAccept, index = 0 }) => {
+    const categoryConfig = CATEGORY_CONFIG[job.category] || { icon: '📋', color: '#6B7280', bgColor: '#F3F4F6' };
+    const timeAgo = getTimeAgo(job.created_at);
+    const avatarColor = getAvatarColor(job.profile?.full_name || 'U');
+    const initials = job.profile?.full_name?.split(' ').map(n => n[0]).join('').toUpperCase() || 'U';
 
     return (
         <View style={styles.card}>
-            <View style={styles.header}>
-                <View style={styles.userInfo}>
-                    <View style={styles.avatarPlaceholder}>
-                        <Text style={styles.avatarText}>
-                            {job.profile?.full_name?.charAt(0) || 'U'}
-                        </Text>
+            {/* Card Header - User Info */}
+            <View style={styles.cardHeader}>
+                <View style={styles.userSection}>
+                    <View style={[styles.avatar, { backgroundColor: avatarColor }]}>
+                        <Text style={styles.avatarText}>{initials}</Text>
                     </View>
-                    <View>
-                        <Text style={styles.userName}>{job.profile?.full_name || 'Anonymous User'}</Text>
-                        <Text style={styles.date}>{formattedDate}</Text>
+                    <View style={styles.userInfo}>
+                        <View style={styles.nameRow}>
+                            <Text style={styles.userName}>{job.profile?.full_name || 'Anonymous'}</Text>
+                            <View style={styles.verifiedBadge}>
+                                <Text style={styles.verifiedIcon}>✓</Text>
+                            </View>
+                        </View>
+                        <Text style={styles.timeAgo}>{timeAgo}</Text>
                     </View>
                 </View>
-                <View style={[styles.categoryPill, { backgroundColor: getCategoryColor(job.category) }]}>
-                    <Text style={styles.categoryText}>{job.category}</Text>
+                <View style={[styles.categoryBadge, { backgroundColor: categoryConfig.bgColor }]}>
+                    <Text style={styles.categoryIcon}>{categoryConfig.icon}</Text>
+                    <Text style={[styles.categoryText, { color: categoryConfig.color }]}>
+                        {job.category}
+                    </Text>
                 </View>
             </View>
 
-            <Text style={styles.title}>{job.title}</Text>
+            {/* Card Body - Job Content */}
+            <View style={styles.cardBody}>
+                <Text style={styles.jobTitle}>{job.title}</Text>
+                
+                {/* Price Tag - Hero Element */}
+                <View style={styles.priceSection}>
+                    <View style={styles.priceTag}>
+                        <Text style={styles.priceCurrency}>$</Text>
+                        <Text style={styles.priceAmount}>{job.price_offer}</Text>
+                    </View>
+                    {job.allow_counter_offers && (
+                        <View style={styles.negotiableBadge}>
+                            <Text style={styles.negotiableText}>💬 Negotiable</Text>
+                        </View>
+                    )}
+                </View>
 
-            <View style={styles.priceContainer}>
-                <Text style={styles.priceLabel}>Offer:</Text>
-                <Text style={styles.price}>${job.price_offer.toFixed(2)}</Text>
+                <Text style={styles.description} numberOfLines={3}>
+                    {job.description}
+                </Text>
+
+                {/* Schedule Info */}
+                {job.schedule_description && (
+                    <View style={styles.scheduleBox}>
+                        <Text style={styles.scheduleIcon}>📅</Text>
+                        <Text style={styles.scheduleText}>{job.schedule_description}</Text>
+                    </View>
+                )}
             </View>
 
-            <Text style={styles.description} numberOfLines={3}>{job.description}</Text>
-
-            {job.schedule_description && (
-                <View style={styles.scheduleContainer}>
-                    <Text style={styles.scheduleLabel}>📅 Schedule:</Text>
-                    <Text style={styles.scheduleText} numberOfLines={1}>{job.schedule_description}</Text>
+            {/* Card Footer - Actions */}
+            <View style={styles.cardFooter}>
+                <View style={styles.statsRow}>
+                    <TouchableOpacity style={styles.actionButton}>
+                        <Text style={styles.actionIcon}>💬</Text>
+                        <Text style={styles.actionText}>Message</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={styles.actionButton}>
+                        <Text style={styles.actionIcon}>📌</Text>
+                        <Text style={styles.actionText}>Save</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={styles.actionButton}>
+                        <Text style={styles.actionIcon}>↗️</Text>
+                        <Text style={styles.actionText}>Share</Text>
+                    </TouchableOpacity>
                 </View>
-            )}
 
-            {isPro && onAccept && (
-                <TouchableOpacity
-                    style={styles.acceptButton}
-                    onPress={() => onAccept(job.id)}
-                >
-                    <Text style={styles.acceptButtonText}>Accept Job</Text>
-                </TouchableOpacity>
-            )}
+                {isPro && onAccept && (
+                    <TouchableOpacity
+                        style={styles.acceptButton}
+                        onPress={() => onAccept(job.id)}
+                        activeOpacity={0.85}
+                    >
+                        <Text style={styles.acceptButtonIcon}>✨</Text>
+                        <Text style={styles.acceptButtonText}>Accept Job</Text>
+                    </TouchableOpacity>
+                )}
+            </View>
         </View>
     );
 };
 
-const getCategoryColor = (category: string) => {
-    switch (category) {
-        case 'Electricity': return '#FFD700';
-        case 'Plumbing': return '#87CEEB';
-        case 'Assembly': return '#FFA500';
-        case 'Moving': return '#90EE90';
-        case 'Painting': return '#FF69B4';
-        default: return '#E0E0E0';
-    }
-};
-
 const styles = StyleSheet.create({
     card: {
-        backgroundColor: '#fff',
-        borderRadius: 12,
-        padding: 16,
+        backgroundColor: '#FFFFFF',
+        borderRadius: 20,
         marginBottom: 16,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-        elevation: 3,
-        borderWidth: 1,
-        borderColor: '#f0f0f0',
+        shadowColor: '#6366F1',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.08,
+        shadowRadius: 16,
+        elevation: 5,
+        overflow: 'hidden',
     },
-    header: {
+    cardHeader: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'flex-start',
-        marginBottom: 12,
+        padding: 16,
+        paddingBottom: 12,
+        borderBottomWidth: 1,
+        borderBottomColor: '#F1F5F9',
     },
-    userInfo: {
+    userSection: {
         flexDirection: 'row',
         alignItems: 'center',
+        flex: 1,
     },
-    avatarPlaceholder: {
-        width: 40,
-        height: 40,
-        borderRadius: 20,
-        backgroundColor: '#ddd',
+    avatar: {
+        width: 46,
+        height: 46,
+        borderRadius: 23,
         justifyContent: 'center',
         alignItems: 'center',
-        marginRight: 10,
+        marginRight: 12,
     },
     avatarText: {
         fontSize: 18,
-        fontWeight: 'bold',
-        color: '#555',
+        fontWeight: '700',
+        color: '#FFFFFF',
+    },
+    userInfo: {
+        flex: 1,
+    },
+    nameRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
     },
     userName: {
+        fontSize: 16,
+        fontWeight: '700',
+        color: '#1E293B',
+        marginRight: 6,
+    },
+    verifiedBadge: {
+        width: 18,
+        height: 18,
+        borderRadius: 9,
+        backgroundColor: '#6366F1',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    verifiedIcon: {
+        fontSize: 10,
+        color: '#FFFFFF',
+        fontWeight: '700',
+    },
+    timeAgo: {
+        fontSize: 13,
+        color: '#94A3B8',
+        fontWeight: '500',
+        marginTop: 2,
+    },
+    categoryBadge: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        borderRadius: 16,
+    },
+    categoryIcon: {
         fontSize: 14,
-        fontWeight: 'bold',
-        color: '#333',
-    },
-    date: {
-        fontSize: 12,
-        color: '#888',
-    },
-    categoryPill: {
-        paddingHorizontal: 10,
-        paddingVertical: 4,
-        borderRadius: 12,
+        marginRight: 4,
     },
     categoryText: {
         fontSize: 12,
-        fontWeight: '600',
-        color: '#333',
+        fontWeight: '700',
     },
-    title: {
-        fontSize: 18,
-        fontWeight: 'bold',
-        marginBottom: 8,
-        color: '#000',
+    cardBody: {
+        padding: 16,
+        paddingTop: 14,
     },
-    priceContainer: {
+    jobTitle: {
+        fontSize: 20,
+        fontWeight: '800',
+        color: '#1E293B',
+        marginBottom: 12,
+        letterSpacing: -0.5,
+    },
+    priceSection: {
         flexDirection: 'row',
         alignItems: 'center',
-        marginBottom: 12,
+        marginBottom: 14,
+        gap: 12,
     },
-    priceLabel: {
-        fontSize: 14,
-        color: '#555',
-        marginRight: 4,
+    priceTag: {
+        flexDirection: 'row',
+        alignItems: 'flex-start',
+        backgroundColor: '#ECFDF5',
+        paddingHorizontal: 14,
+        paddingVertical: 8,
+        borderRadius: 12,
     },
-    price: {
-        fontSize: 18,
-        fontWeight: 'bold',
-        color: '#007AFF', // Functionally green or brand color
+    priceCurrency: {
+        fontSize: 16,
+        fontWeight: '700',
+        color: '#10B981',
+        marginTop: 2,
+    },
+    priceAmount: {
+        fontSize: 28,
+        fontWeight: '800',
+        color: '#10B981',
+        letterSpacing: -1,
+    },
+    negotiableBadge: {
+        backgroundColor: '#FEF3C7',
+        paddingHorizontal: 10,
+        paddingVertical: 6,
+        borderRadius: 10,
+    },
+    negotiableText: {
+        fontSize: 12,
+        fontWeight: '600',
+        color: '#D97706',
     },
     description: {
-        fontSize: 14,
-        color: '#444',
-        marginBottom: 12,
-        lineHeight: 20,
+        fontSize: 15,
+        lineHeight: 22,
+        color: '#475569',
+        marginBottom: 14,
     },
-    scheduleContainer: {
+    scheduleBox: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: '#f9f9f9',
-        padding: 8,
-        borderRadius: 6,
-        marginBottom: 12,
+        backgroundColor: '#F8FAFC',
+        paddingHorizontal: 14,
+        paddingVertical: 12,
+        borderRadius: 12,
+        borderWidth: 1,
+        borderColor: '#E2E8F0',
     },
-    scheduleLabel: {
-        fontSize: 12,
-        fontWeight: '600',
-        marginRight: 6,
-        color: '#555',
+    scheduleIcon: {
+        fontSize: 16,
+        marginRight: 8,
     },
     scheduleText: {
-        fontSize: 12,
-        color: '#333',
+        fontSize: 14,
+        color: '#475569',
+        fontWeight: '500',
         flex: 1,
     },
-    acceptButton: {
-        backgroundColor: '#007AFF',
-        paddingVertical: 12,
-        borderRadius: 8,
+    cardFooter: {
+        padding: 16,
+        paddingTop: 12,
+        borderTopWidth: 1,
+        borderTopColor: '#F1F5F9',
+    },
+    statsRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-around',
+        marginBottom: 12,
+    },
+    actionButton: {
+        flexDirection: 'row',
         alignItems: 'center',
-        marginTop: 4,
+        paddingVertical: 8,
+        paddingHorizontal: 12,
+    },
+    actionIcon: {
+        fontSize: 16,
+        marginRight: 6,
+    },
+    actionText: {
+        fontSize: 13,
+        fontWeight: '600',
+        color: '#64748B',
+    },
+    acceptButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: '#6366F1',
+        paddingVertical: 14,
+        borderRadius: 14,
+        shadowColor: '#6366F1',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.35,
+        shadowRadius: 12,
+        elevation: 6,
+    },
+    acceptButtonIcon: {
+        fontSize: 18,
+        marginRight: 8,
     },
     acceptButtonText: {
-        color: '#fff',
+        color: '#FFFFFF',
         fontSize: 16,
-        fontWeight: 'bold',
+        fontWeight: '700',
+        letterSpacing: 0.5,
     },
 });
 
