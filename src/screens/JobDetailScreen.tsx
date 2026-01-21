@@ -12,6 +12,7 @@ import {
     Platform,
     KeyboardAvoidingView,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar } from 'expo-status-bar';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RouteProp } from '@react-navigation/native';
@@ -19,7 +20,8 @@ import { RootStackParamList } from '../navigation/AppNavigator';
 import { supabase } from '../services/supabase';
 import { Job, Bid, Profile } from '../types/database';
 import { useTranslation, getTimeAgoTranslation, getCategoryTranslation, getStatusTranslation } from '../i18n';
-import { useResponsive, LAYOUT } from '../utils/responsive';
+import { useResponsive, LAYOUT as RESPONSIVE_LAYOUT } from '../utils/responsive';
+import { COLORS, FONTS, SHADOWS, LAYOUT as THEME_LAYOUT } from '../theme';
 
 type JobDetailScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'JobDetail'>;
 type JobDetailScreenRouteProp = RouteProp<RootStackParamList, 'JobDetail'>;
@@ -46,7 +48,7 @@ const getAvatarColor = (name: string): string => {
 const JobDetailScreen: React.FC<Props> = ({ navigation, route }) => {
     const { t, isRTL } = useTranslation();
     const responsive = useResponsive();
-    
+
     const { job } = route.params;
     const [currentUser, setCurrentUser] = useState<any>(null);
     const [userProfile, setUserProfile] = useState<Profile | null>(null);
@@ -54,7 +56,7 @@ const JobDetailScreen: React.FC<Props> = ({ navigation, route }) => {
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
     const [existingBid, setExistingBid] = useState<Bid | null>(null);
-    
+
     // Counter offer modal state
     const [showCounterModal, setShowCounterModal] = useState(false);
     const [counterPrice, setCounterPrice] = useState('');
@@ -64,7 +66,7 @@ const JobDetailScreen: React.FC<Props> = ({ navigation, route }) => {
     const avatarColor = getAvatarColor(job.profile?.full_name || 'U');
     const initials = job.profile?.full_name?.split(' ').map(n => n[0]).join('').toUpperCase() || 'U';
     const timeAgo = getTimeAgoTranslation(t, job.created_at);
-    
+
     // Engagement stats
     const viewsCount = job.views_count || Math.floor(Math.random() * 50) + 10;
     const bidsCount = job.bids?.length || 0;
@@ -84,7 +86,7 @@ const JobDetailScreen: React.FC<Props> = ({ navigation, route }) => {
                     .select('*')
                     .eq('id', user.id)
                     .single();
-                
+
                 setUserProfile(profile);
                 setIsPro(profile?.role === 'pro');
 
@@ -95,7 +97,7 @@ const JobDetailScreen: React.FC<Props> = ({ navigation, route }) => {
                         .eq('job_id', job.id)
                         .eq('pro_id', user.id)
                         .single();
-                    
+
                     setExistingBid(bid);
                 }
             }
@@ -239,8 +241,8 @@ const JobDetailScreen: React.FC<Props> = ({ navigation, route }) => {
     return (
         <View style={styles.container}>
             <StatusBar style="dark" />
-            
-            <ScrollView 
+
+            <ScrollView
                 style={styles.scrollView}
                 contentContainerStyle={[
                     styles.scrollContent,
@@ -262,7 +264,7 @@ const JobDetailScreen: React.FC<Props> = ({ navigation, route }) => {
 
                 {/* Category Badge */}
                 <View style={[
-                    styles.categoryBadge, 
+                    styles.categoryBadge,
                     { backgroundColor: categoryConfig.bgColor },
                     isRTL && styles.categoryBadgeRTL
                 ]}>
@@ -405,7 +407,7 @@ const JobDetailScreen: React.FC<Props> = ({ navigation, route }) => {
                 animationType="slide"
                 onRequestClose={() => setShowCounterModal(false)}
             >
-                <KeyboardAvoidingView 
+                <KeyboardAvoidingView
                     style={styles.modalOverlay}
                     behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
                 >
@@ -477,7 +479,7 @@ const JobDetailScreen: React.FC<Props> = ({ navigation, route }) => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#F8FAFC',
+        backgroundColor: COLORS.background,
     },
     loadingContainer: {
         flex: 1,
@@ -492,7 +494,7 @@ const styles = StyleSheet.create({
         padding: 20,
     },
     scrollContentWeb: {
-        maxWidth: LAYOUT.feedMaxWidth,
+        maxWidth: RESPONSIVE_LAYOUT.feedMaxWidth,
         alignSelf: 'center',
         width: '100%',
     },
@@ -523,8 +525,8 @@ const styles = StyleSheet.create({
     },
     engagementText: {
         fontSize: 14,
-        fontWeight: '500',
-        color: '#64748B',
+        fontFamily: FONTS.body.semiBold,
+        color: COLORS.textLight,
     },
     categoryBadge: {
         flexDirection: 'row',
@@ -544,25 +546,23 @@ const styles = StyleSheet.create({
     },
     categoryText: {
         fontSize: 14,
-        fontWeight: '700',
+        fontFamily: FONTS.body.bold,
     },
     jobTitle: {
         fontSize: 28,
-        fontWeight: '800',
-        color: '#1E293B',
+        fontFamily: FONTS.heading.bold,
+        color: COLORS.text,
         letterSpacing: -0.5,
         marginBottom: 20,
     },
     priceCard: {
-        backgroundColor: '#FFFFFF',
-        borderRadius: 16,
-        padding: 20,
-        marginBottom: 16,
-        shadowColor: '#6366F1',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.08,
-        shadowRadius: 12,
-        elevation: 4,
+        backgroundColor: COLORS.white,
+        borderRadius: THEME_LAYOUT.borderRadius.xl,
+        padding: 24,
+        marginBottom: 20,
+        borderWidth: 1,
+        borderColor: COLORS.white,
+        ...SHADOWS.glow, // The "Vibrant" glow
     },
     priceHeader: {
         flexDirection: 'row',
@@ -592,28 +592,26 @@ const styles = StyleSheet.create({
     },
     priceCurrency: {
         fontSize: 24,
-        fontWeight: '700',
-        color: '#10B981',
+        fontFamily: FONTS.heading.bold,
+        color: COLORS.success,
         marginTop: 4,
     },
     priceAmount: {
         fontSize: 48,
-        fontWeight: '800',
-        color: '#10B981',
+        fontFamily: FONTS.heading.bold,
+        color: COLORS.success,
         letterSpacing: -2,
     },
     posterCard: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: '#FFFFFF',
-        borderRadius: 16,
+        backgroundColor: COLORS.white,
+        borderRadius: THEME_LAYOUT.borderRadius.l,
         padding: 16,
         marginBottom: 20,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.05,
-        shadowRadius: 8,
-        elevation: 2,
+        borderWidth: 1,
+        borderColor: COLORS.white,
+        ...SHADOWS.card,
     },
     avatar: {
         width: 50,
@@ -637,8 +635,8 @@ const styles = StyleSheet.create({
     },
     posterName: {
         fontSize: 16,
-        fontWeight: '700',
-        color: '#1E293B',
+        fontFamily: FONTS.body.bold,
+        color: COLORS.text,
     },
     posterTime: {
         fontSize: 13,
@@ -759,14 +757,10 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: '#6366F1',
+        backgroundColor: COLORS.primary,
         paddingVertical: 16,
         borderRadius: 14,
-        shadowColor: '#6366F1',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.35,
-        shadowRadius: 12,
-        elevation: 6,
+        ...SHADOWS.glow,
     },
     acceptButtonFull: {
         flexDirection: 'row',

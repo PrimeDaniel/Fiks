@@ -17,6 +17,7 @@ import { supabase } from '../services/supabase';
 import { useTranslation } from '../i18n';
 import { useResponsive, LAYOUT } from '../utils/responsive';
 import LanguageToggle from '../components/LanguageToggle';
+import { COLORS, FONTS } from '../theme';
 
 type LoginScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Login'>;
 
@@ -27,7 +28,7 @@ type Props = {
 const LoginScreen: React.FC<Props> = ({ navigation }) => {
     const { t, isRTL } = useTranslation();
     const responsive = useResponsive();
-    
+
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [fullName, setFullName] = useState('');
@@ -81,7 +82,7 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
             behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
             style={styles.container}
         >
-            <ScrollView 
+            <ScrollView
                 contentContainerStyle={[
                     styles.scrollContent,
                     responsive.isWeb && !responsive.isMobile && styles.scrollContentWeb,
@@ -202,13 +203,13 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
                         )}
                     </TouchableOpacity>
 
-                    <TouchableOpacity 
+                    <TouchableOpacity
                         style={styles.switchButton}
                         onPress={() => setIsSignUp(!isSignUp)}
                     >
                         <Text style={[styles.switchText, isRTL && styles.textRTL]}>
-                            {isSignUp 
-                                ? `${t.login.haveAccount} ${t.login.signIn}` 
+                            {isSignUp
+                                ? `${t.login.haveAccount} ${t.login.signIn}`
                                 : `${t.login.noAccount} ${t.login.signUp}`
                             }
                         </Text>
@@ -222,7 +223,7 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#F8FAFC',
+        backgroundColor: COLORS.background,
     },
     scrollContent: {
         flexGrow: 1,
@@ -252,8 +253,8 @@ const styles = StyleSheet.create({
     },
     title: {
         fontSize: 28,
-        fontWeight: '800',
-        color: '#1E293B',
+        fontFamily: FONTS.heading.bold,
+        color: COLORS.text,
         marginBottom: 8,
     },
     subtitle: {
@@ -270,19 +271,20 @@ const styles = StyleSheet.create({
     },
     inputLabel: {
         fontSize: 14,
-        fontWeight: '600',
-        color: '#1E293B',
+        fontFamily: FONTS.body.semiBold,
+        color: COLORS.text,
         marginBottom: 8,
     },
     input: {
-        backgroundColor: '#FFFFFF',
+        backgroundColor: COLORS.white,
         padding: 16,
         borderRadius: 12,
         marginBottom: 16,
         fontSize: 16,
-        color: '#1E293B',
-        borderWidth: 2,
-        borderColor: '#E2E8F0',
+        color: COLORS.text,
+        borderWidth: 1, // Cleaner thin border
+        borderColor: COLORS.gray[200],
+        fontFamily: FONTS.body.regular,
     },
     inputRTL: {
         textAlign: 'right',
@@ -294,16 +296,16 @@ const styles = StyleSheet.create({
     },
     roleCard: {
         flex: 1,
-        backgroundColor: '#FFFFFF',
+        backgroundColor: COLORS.white,
         borderRadius: 16,
         padding: 16,
         alignItems: 'center',
-        borderWidth: 2,
-        borderColor: '#E2E8F0',
+        borderWidth: 1,
+        borderColor: COLORS.gray[200],
     },
     roleCardSelected: {
-        borderColor: '#6366F1',
-        backgroundColor: '#EEF2FF',
+        borderColor: COLORS.primary,
+        backgroundColor: COLORS.gray[100], // Subtle highlight
     },
     roleIcon: {
         fontSize: 32,
@@ -324,21 +326,17 @@ const styles = StyleSheet.create({
         textAlign: 'center',
     },
     button: {
-        backgroundColor: '#6366F1',
+        backgroundColor: COLORS.primary,
         padding: 16,
         borderRadius: 12,
         alignItems: 'center',
         marginTop: 8,
-        shadowColor: '#6366F1',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.3,
-        shadowRadius: 8,
-        elevation: 4,
+        // Flat design - no shadow
     },
     buttonText: {
-        color: '#fff',
+        color: COLORS.white,
         fontSize: 16,
-        fontWeight: '700',
+        fontFamily: FONTS.body.bold,
     },
     switchButton: {
         marginTop: 24,
@@ -346,9 +344,9 @@ const styles = StyleSheet.create({
     },
     switchText: {
         textAlign: 'center',
-        color: '#6366F1',
+        color: COLORS.primary,
         fontSize: 15,
-        fontWeight: '600',
+        fontFamily: FONTS.body.semiBold,
     },
 });
 

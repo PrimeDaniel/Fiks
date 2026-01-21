@@ -8,7 +8,10 @@ import {
     ActivityIndicator,
     Platform,
     ScrollView,
+    Image,
+    Animated,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar } from 'expo-status-bar';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useFocusEffect } from '@react-navigation/native';
@@ -19,7 +22,8 @@ import JobCard from '../components/JobCard';
 import LanguageToggle from '../components/LanguageToggle';
 import WebSidebar from '../components/WebSidebar';
 import { useTranslation, getCategoryTranslation } from '../i18n';
-import { useResponsive, LAYOUT } from '../utils/responsive';
+import { useResponsive, LAYOUT as RESPONSIVE_LAYOUT } from '../utils/responsive';
+import { COLORS, FONTS, SHADOWS, LAYOUT as THEME_LAYOUT } from '../theme';
 
 type HomeScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Home'>;
 
@@ -29,17 +33,17 @@ type Props = {
 
 type CategoryItem = {
     name: JobCategory | 'All';
-    icon: string;
+    image: string;
     color: string;
 };
 
 const CATEGORIES: CategoryItem[] = [
-    { name: 'All', icon: '🏠', color: '#6366F1' },
-    { name: 'Electricity', icon: '⚡', color: '#F59E0B' },
-    { name: 'Plumbing', icon: '🔧', color: '#3B82F6' },
-    { name: 'Assembly', icon: '🔨', color: '#F97316' },
-    { name: 'Moving', icon: '📦', color: '#10B981' },
-    { name: 'Painting', icon: '🎨', color: '#EC4899' },
+    { name: 'All', image: 'https://images.unsplash.com/photo-1513694203232-719a280e022f?w=100&q=80', color: '#6366F1' },
+    { name: 'Electricity', image: 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=100&q=80', color: '#F59E0B' },
+    { name: 'Plumbing', image: 'https://images.unsplash.com/photo-1504148455328-c376907d081c?w=100&q=80', color: '#3B82F6' },
+    { name: 'Assembly', image: 'https://images.unsplash.com/photo-1581244277943-fe4a9c777189?w=100&q=80', color: '#F97316' },
+    { name: 'Moving', image: 'https://images.unsplash.com/photo-1600518464441-9154a4dea21b?w=100&q=80', color: '#10B981' },
+    { name: 'Painting', image: 'https://images.unsplash.com/photo-1562259949-e8e7689d7828?w=100&q=80', color: '#EC4899' },
 ];
 
 const MOCK_JOBS: Job[] = [
@@ -65,7 +69,7 @@ const MOCK_JOBS: Job[] = [
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
         },
-        bids: [{id: '1', created_at: '', updated_at: '', job_id: '1', pro_id: '1', price: 75, status: 'Pending'}]
+        bids: [{ id: '1', created_at: '', updated_at: '', job_id: '1', pro_id: '1', price: 75, status: 'Pending' }]
     },
     {
         id: '2',
@@ -113,7 +117,7 @@ const MOCK_JOBS: Job[] = [
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
         },
-        bids: [{id: '2', created_at: '', updated_at: '', job_id: '3', pro_id: '2', price: 140, status: 'Pending'}, {id: '3', created_at: '', updated_at: '', job_id: '3', pro_id: '3', price: 145, status: 'Pending'}]
+        bids: [{ id: '2', created_at: '', updated_at: '', job_id: '3', pro_id: '2', price: 140, status: 'Pending' }, { id: '3', created_at: '', updated_at: '', job_id: '3', pro_id: '3', price: 145, status: 'Pending' }]
     },
     {
         id: '4',
@@ -137,14 +141,14 @@ const MOCK_JOBS: Job[] = [
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
         },
-        bids: [{id: '4', created_at: '', updated_at: '', job_id: '4', pro_id: '4', price: 230, status: 'Pending'}]
+        bids: [{ id: '4', created_at: '', updated_at: '', job_id: '4', pro_id: '4', price: 230, status: 'Pending' }]
     }
 ];
 
 const HomeScreen: React.FC<Props> = ({ navigation }) => {
     const { t, isRTL } = useTranslation();
     const responsive = useResponsive();
-    
+
     const [jobs, setJobs] = useState<Job[]>([]);
     const [loading, setLoading] = useState(true);
     const [selectedCategory, setSelectedCategory] = useState<JobCategory | 'All'>('All');
@@ -253,12 +257,23 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
             </View>
 
             {/* Hero Section */}
-            <View style={styles.heroSection}>
-                <Text style={[styles.heroTitle, isRTL && styles.textRTL]}>{t.home.title}</Text>
-                <Text style={[styles.heroSubtitle, isRTL && styles.textRTL]}>
-                    {t.home.subtitle}
-                </Text>
-            </View>
+            <LinearGradient
+                colors={COLORS.gradients.primary as any}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.heroGradient}
+            >
+                <Image
+                    source={{ uri: 'https://images.unsplash.com/photo-1521737604893-d14cc237f11d?w=800&q=80' }}
+                    style={styles.heroBgImage}
+                />
+                <View style={styles.heroContent}>
+                    <Text style={[styles.heroTitle, isRTL && styles.textRTL]}>{t.home.title}</Text>
+                    <Text style={[styles.heroSubtitle, isRTL && styles.textRTL]}>
+                        {t.home.subtitle}
+                    </Text>
+                </View>
+            </LinearGradient>
 
             {/* Category Pills - Only show on mobile/when sidebar is hidden */}
             {!responsive.showSidebar && (
@@ -282,7 +297,7 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
                                 onPress={() => setSelectedCategory(item.name)}
                                 activeOpacity={0.7}
                             >
-                                <Text style={styles.categoryIcon}>{item.icon}</Text>
+                                <Image source={{ uri: item.image }} style={styles.categoryImage} />
                                 <Text style={[
                                     styles.categoryText,
                                     selectedCategory === item.name && styles.categoryTextSelected
@@ -298,9 +313,9 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
             {/* Feed Header */}
             <View style={[styles.feedHeader, isRTL && styles.feedHeaderRTL]}>
                 <Text style={[styles.feedTitle, isRTL && styles.textRTL]}>
-                    {selectedCategory === 'All' 
-                        ? t.home.latestJobs 
-                        : `${CATEGORIES.find(c => c.name === selectedCategory)?.icon} ${getCategoryTranslation(t, selectedCategory)}`
+                    {selectedCategory === 'All'
+                        ? t.home.latestJobs
+                        : `${getCategoryTranslation(t, selectedCategory)}`
                     }
                 </Text>
                 <Text style={styles.feedCount}>{jobs.length} {t.home.available}</Text>
@@ -366,7 +381,7 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
         return (
             <View style={styles.container}>
                 <StatusBar style="dark" />
-                <ScrollView 
+                <ScrollView
                     style={styles.webScrollView}
                     contentContainerStyle={styles.webScrollContent}
                     showsVerticalScrollIndicator={false}
@@ -381,7 +396,7 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
                             onBecomeProPress={handleBecomeProPress}
                             isRTL={isRTL}
                         />
-                        
+
                         {/* Center Feed */}
                         <View style={styles.webFeedContainer}>
                             {renderHeader()}
@@ -431,13 +446,13 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#F8FAFC',
+        backgroundColor: COLORS.background,
     },
     loadingContainer: {
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: '#F8FAFC',
+        backgroundColor: COLORS.background,
     },
     loadingSpinner: {
         alignItems: 'center',
@@ -445,8 +460,8 @@ const styles = StyleSheet.create({
     loadingText: {
         marginTop: 12,
         fontSize: 16,
-        color: '#64748B',
-        fontWeight: '500',
+        color: COLORS.gray[500],
+        fontFamily: FONTS.body.regular,
     },
     // Web layout styles
     webScrollView: {
@@ -468,27 +483,25 @@ const styles = StyleSheet.create({
         flexDirection: 'row-reverse',
     },
     webFeedContainer: {
-        width: LAYOUT.feedMaxWidth,
-        maxWidth: LAYOUT.feedMaxWidth,
+        width: RESPONSIVE_LAYOUT.feedMaxWidth,
+        maxWidth: RESPONSIVE_LAYOUT.feedMaxWidth,
     },
+    // Header styles
     webRightSpacer: {
-        width: LAYOUT.sidebarWidth,
+        width: RESPONSIVE_LAYOUT.sidebarWidth,
         ...Platform.select({
             web: {
                 display: 'none',
             } as any,
         }),
     },
-    // Header styles
     headerWrapper: {
-        backgroundColor: '#FFFFFF',
+        backgroundColor: COLORS.white,
         borderBottomLeftRadius: 24,
         borderBottomRightRadius: 24,
-        shadowColor: '#6366F1',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.08,
-        shadowRadius: 12,
-        elevation: 8,
+        borderBottomWidth: 1,
+        borderColor: COLORS.gray[200],
+        // Flat design - no shadow
         marginBottom: 16,
     },
     headerWrapperWeb: {
@@ -527,8 +540,8 @@ const styles = StyleSheet.create({
     },
     logoText: {
         fontSize: 28,
-        fontWeight: '800',
-        color: '#1E293B',
+        fontFamily: FONTS.heading.bold,
+        color: COLORS.text,
         letterSpacing: -1,
     },
     navButtons: {
@@ -582,8 +595,8 @@ const styles = StyleSheet.create({
     },
     userBadgeText: {
         fontSize: 14,
-        fontWeight: '600',
-        color: '#6366F1',
+        fontFamily: FONTS.body.semiBold,
+        color: COLORS.primary,
     },
     postButton: {
         flexDirection: 'row',
@@ -591,12 +604,9 @@ const styles = StyleSheet.create({
         paddingHorizontal: 14,
         paddingVertical: 10,
         borderRadius: 12,
-        backgroundColor: '#6366F1',
-        shadowColor: '#6366F1',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.3,
-        shadowRadius: 8,
-        elevation: 4,
+        backgroundColor: COLORS.primary,
+        // Flat design - no shadow
+
         ...Platform.select({
             web: {
                 cursor: 'pointer',
@@ -611,25 +621,45 @@ const styles = StyleSheet.create({
     },
     postButtonText: {
         fontSize: 14,
-        fontWeight: '700',
+        fontFamily: FONTS.body.bold, // Updated to bold
         color: '#FFFFFF',
     },
-    heroSection: {
-        paddingHorizontal: 20,
-        paddingTop: 8,
-        paddingBottom: 20,
+    heroGradient: {
+        margin: 20,
+        borderRadius: THEME_LAYOUT.borderRadius.l,
+        padding: 0, // Remove padding to let image fill, add padding to content
+        ...SHADOWS.glow,
+        overflow: 'hidden',
+        position: 'relative',
+    },
+    heroBgImage: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        opacity: 0.2,
+    },
+    heroContent: {
+        padding: 24,
     },
     heroTitle: {
         fontSize: 32,
-        fontWeight: '800',
-        color: '#1E293B',
+        fontFamily: FONTS.heading.bold,
+        color: COLORS.white, // White text on gradient
         letterSpacing: -1,
-        marginBottom: 4,
+        marginBottom: 8,
+        textShadowColor: 'rgba(0,0,0,0.2)',
+        textShadowOffset: { width: 0, height: 2 },
+        textShadowRadius: 4,
     },
     heroSubtitle: {
         fontSize: 16,
-        color: '#64748B',
-        fontWeight: '500',
+        color: 'rgba(255,255,255,0.95)', // White text on gradient
+        fontFamily: FONTS.body.regular,
+        textShadowColor: 'rgba(0,0,0,0.2)',
+        textShadowOffset: { width: 0, height: 1 },
+        textShadowRadius: 2,
     },
     textRTL: {
         textAlign: 'right',
@@ -644,22 +674,27 @@ const styles = StyleSheet.create({
     categoryPill: {
         flexDirection: 'row',
         alignItems: 'center',
-        paddingHorizontal: 16,
-        paddingVertical: 10,
-        borderRadius: 24,
-        backgroundColor: '#F8FAFC',
-        borderWidth: 1.5,
-        borderColor: '#E2E8F0',
+        paddingHorizontal: 8,
+        paddingVertical: 8,
+        paddingRight: 16,
+        borderRadius: 30, // Pill shape
+        backgroundColor: COLORS.card,
+        borderWidth: 1,
+        borderColor: COLORS.white,
         marginRight: 8,
+        ...SHADOWS.card,
         ...Platform.select({
             web: {
                 cursor: 'pointer',
             } as any,
         }),
     },
-    categoryIcon: {
-        fontSize: 16,
-        marginRight: 6,
+    categoryImage: {
+        width: 32,
+        height: 32,
+        borderRadius: 16,
+        marginRight: 8,
+        backgroundColor: COLORS.gray[200],
     },
     categoryText: {
         fontSize: 14,
@@ -695,7 +730,7 @@ const styles = StyleSheet.create({
         paddingBottom: 100,
     },
     listContentWeb: {
-        maxWidth: LAYOUT.feedMaxWidth,
+        maxWidth: RESPONSIVE_LAYOUT.feedMaxWidth,
         alignSelf: 'center',
         width: '100%',
     },

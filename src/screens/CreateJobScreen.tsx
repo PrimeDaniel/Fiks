@@ -16,7 +16,8 @@ import { RootStackParamList } from '../navigation/AppNavigator';
 import { supabase } from '../services/supabase';
 import { JobCategory } from '../types/database';
 import { useTranslation, getCategoryTranslation } from '../i18n';
-import { useResponsive, LAYOUT } from '../utils/responsive';
+import { useResponsive, LAYOUT as RESPONSIVE_LAYOUT } from '../utils/responsive';
+import { COLORS, FONTS, SHADOWS, LAYOUT as THEME_LAYOUT } from '../theme';
 
 type CreateJobScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'CreateJob'>;
 
@@ -41,7 +42,7 @@ const CATEGORIES: CategoryItem[] = [
 const CreateJobScreen: React.FC<Props> = ({ navigation }) => {
     const { t, isRTL } = useTranslation();
     const responsive = useResponsive();
-    
+
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
     const [category, setCategory] = useState<JobCategory | ''>('');
@@ -99,7 +100,7 @@ const CreateJobScreen: React.FC<Props> = ({ navigation }) => {
     };
 
     return (
-        <ScrollView 
+        <ScrollView
             contentContainerStyle={[
                 styles.container,
                 responsive.isWeb && !responsive.isMobile && styles.containerWeb,
@@ -131,7 +132,7 @@ const CreateJobScreen: React.FC<Props> = ({ navigation }) => {
                             key={cat.name}
                             style={[
                                 styles.pill,
-                                category === cat.name && { 
+                                category === cat.name && {
                                     backgroundColor: cat.color,
                                     borderColor: cat.color,
                                 }
@@ -237,10 +238,10 @@ const CreateJobScreen: React.FC<Props> = ({ navigation }) => {
 const styles = StyleSheet.create({
     container: {
         padding: 20,
-        backgroundColor: '#F8FAFC',
+        backgroundColor: COLORS.background,
     },
     containerWeb: {
-        maxWidth: LAYOUT.feedMaxWidth,
+        maxWidth: RESPONSIVE_LAYOUT.feedMaxWidth,
         alignSelf: 'center',
         width: '100%',
     },
@@ -249,9 +250,9 @@ const styles = StyleSheet.create({
     },
     label: {
         fontSize: 16,
-        fontWeight: '700',
+        fontFamily: FONTS.body.bold,
         marginBottom: 12,
-        color: '#1E293B',
+        color: COLORS.text,
     },
     textRTL: {
         textAlign: 'right',
@@ -260,13 +261,14 @@ const styles = StyleSheet.create({
         flexDirection: 'row-reverse',
     },
     input: {
-        backgroundColor: '#FFFFFF',
-        borderWidth: 2,
-        borderColor: '#E2E8F0',
+        backgroundColor: COLORS.white,
+        borderWidth: 1,
+        borderColor: COLORS.gray[200],
         borderRadius: 12,
         padding: 16,
         fontSize: 16,
-        color: '#1E293B',
+        fontFamily: FONTS.body.regular,
+        color: COLORS.text,
     },
     inputRTL: {
         textAlign: 'right',
@@ -289,9 +291,10 @@ const styles = StyleSheet.create({
         paddingHorizontal: 16,
         paddingVertical: 10,
         borderRadius: 24,
-        backgroundColor: '#FFFFFF',
-        borderWidth: 2,
-        borderColor: '#E2E8F0',
+        backgroundColor: COLORS.white,
+        borderWidth: 1,
+        borderColor: COLORS.gray[200],
+        ...SHADOWS.card,
     },
     pillIcon: {
         fontSize: 16,
@@ -308,35 +311,36 @@ const styles = StyleSheet.create({
     priceInputContainer: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: '#FFFFFF',
-        borderWidth: 2,
-        borderColor: '#E2E8F0',
+        backgroundColor: COLORS.white,
+        borderWidth: 1,
+        borderColor: COLORS.gray[200],
         borderRadius: 12,
         paddingHorizontal: 16,
     },
     pricePrefix: {
         fontSize: 24,
-        fontWeight: '700',
-        color: '#10B981',
+        fontFamily: FONTS.heading.bold,
+        color: COLORS.success,
         marginRight: 8,
     },
     priceInput: {
         flex: 1,
         fontSize: 24,
-        fontWeight: '700',
-        color: '#1E293B',
+        fontFamily: FONTS.heading.bold,
+        color: COLORS.text,
         paddingVertical: 14,
     },
     switchContainer: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        backgroundColor: '#FFFFFF',
+        backgroundColor: COLORS.white,
         borderRadius: 12,
         padding: 16,
         marginBottom: 24,
-        borderWidth: 2,
-        borderColor: '#E2E8F0',
+        borderWidth: 1,
+        borderColor: COLORS.gray[200],
+        ...SHADOWS.card,
     },
     switchContainerRTL: {
         flexDirection: 'row-reverse',
@@ -356,20 +360,16 @@ const styles = StyleSheet.create({
         color: '#64748B',
     },
     submitButton: {
-        backgroundColor: '#6366F1',
+        backgroundColor: COLORS.primary,
         padding: 18,
         borderRadius: 14,
         alignItems: 'center',
-        shadowColor: '#6366F1',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.3,
-        shadowRadius: 8,
-        elevation: 4,
+        ...SHADOWS.glow,
     },
     submitButtonText: {
-        color: '#fff',
+        color: COLORS.white,
         fontSize: 18,
-        fontWeight: '700',
+        fontFamily: FONTS.body.bold,
     },
 });
 

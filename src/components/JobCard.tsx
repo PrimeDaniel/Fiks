@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, Platform } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, Platform, Animated } from 'react-native';
 import { Job } from '../types/database';
 import { useTranslation, getTimeAgoTranslation, getCategoryTranslation } from '../i18n';
-import { useResponsive, LAYOUT } from '../utils/responsive';
+import { useResponsive, LAYOUT as RESPONSIVE_LAYOUT } from '../utils/responsive';
+import { COLORS, FONTS, SHADOWS, LAYOUT as THEME_LAYOUT } from '../theme';
 
 type Props = {
     job: Job;
@@ -30,7 +31,48 @@ const JobCard: React.FC<Props> = ({ job, isPro, onAccept, onPress, index = 0 }) 
     const { t, isRTL } = useTranslation();
     const responsive = useResponsive();
     const [isHovered, setIsHovered] = useState(false);
-    
+
+    // Animations
+    const fadeAnim = React.useRef(new Animated.Value(0)).current;
+    const slideAnim = React.useRef(new Animated.Value(50)).current;
+    const scaleAnim = React.useRef(new Animated.Value(1)).current;
+
+    React.useEffect(() => {
+        Animated.parallel([
+            Animated.timing(fadeAnim, {
+                toValue: 1,
+                duration: 500,
+                delay: index * 100, // Staggered effect
+                useNativeDriver: true,
+            }),
+            Animated.spring(slideAnim, {
+                toValue: 0,
+                friction: 8,
+                tension: 40,
+                delay: index * 100,
+                useNativeDriver: true,
+            })
+        ]).start();
+    }, []);
+
+    const handlePressIn = () => {
+        Animated.spring(scaleAnim, {
+            toValue: 0.96,
+            useNativeDriver: true,
+        }).start();
+    };
+
+    const handlePressOut = () => {
+        Animated.spring(scaleAnim, {
+            toValue: 1,
+            friction: 5,
+            tension: 40,
+            useNativeDriver: true,
+        }).start();
+    };
+
+    const AnimatedTouchableOpacity = Animated.createAnimatedComponent(TouchableOpacity);
+
     const categoryConfig = CATEGORY_CONFIG[job.category] || { icon: '📋', color: '#6B7280', bgColor: '#F3F4F6' };
     const timeAgo = getTimeAgoTranslation(t, job.created_at);
     const avatarColor = getAvatarColor(job.profile?.full_name || 'U');
@@ -53,14 +95,23 @@ const JobCard: React.FC<Props> = ({ job, isPro, onAccept, onPress, index = 0 }) 
     } : {};
 
     return (
-        <TouchableOpacity 
+        <AnimatedTouchableOpacity
             style={[
                 styles.card,
                 responsive.isWeb && styles.cardWeb,
                 isHovered && styles.cardHovered,
-            ]} 
+                {
+                    opacity: fadeAnim,
+                    transform: [
+                        { translateY: slideAnim },
+                        { scale: scaleAnim }
+                    ]
+                }
+            ]}
             onPress={handlePress}
-            activeOpacity={0.95}
+            onPressIn={handlePressIn}
+            onPressOut={handlePressOut}
+            activeOpacity={1}
             {...webHoverProps}
         >
             {/* Card Header - User Info */}
@@ -92,7 +143,7 @@ const JobCard: React.FC<Props> = ({ job, isPro, onAccept, onPress, index = 0 }) 
             {/* Card Body - Job Content */}
             <View style={styles.cardBody}>
                 <Text style={[styles.jobTitle, isRTL && styles.textRTL]}>{job.title}</Text>
-                
+
                 {/* Price Tag - Hero Element */}
                 <View style={[styles.priceSection, isRTL && styles.rowRTL]}>
                     <View style={styles.priceTag}>
@@ -137,21 +188,21 @@ const JobCard: React.FC<Props> = ({ job, isPro, onAccept, onPress, index = 0 }) 
 
                 {/* Quick Actions */}
                 <View style={[styles.actionsRow, isRTL && styles.rowRTL]}>
-                    <TouchableOpacity 
+                    <TouchableOpacity
                         style={[styles.actionButton, isHovered && styles.actionButtonHovered]}
                         activeOpacity={0.7}
                     >
                         <Text style={styles.actionIcon}>💬</Text>
                         <Text style={styles.actionText}>{t.jobCard.message}</Text>
                     </TouchableOpacity>
-                    <TouchableOpacity 
+                    <TouchableOpacity
                         style={[styles.actionButton, isHovered && styles.actionButtonHovered]}
                         activeOpacity={0.7}
                     >
                         <Text style={styles.actionIcon}>📌</Text>
                         <Text style={styles.actionText}>{t.jobCard.save}</Text>
                     </TouchableOpacity>
-                    <TouchableOpacity 
+                    <TouchableOpacity
                         style={[styles.actionButton, isHovered && styles.actionButtonHovered]}
                         activeOpacity={0.7}
                     >
@@ -167,24 +218,22 @@ const JobCard: React.FC<Props> = ({ job, isPro, onAccept, onPress, index = 0 }) 
                     </View>
                 )}
             </View>
-        </TouchableOpacity>
+        </AnimatedTouchableOpacity>
     );
 };
 
 const styles = StyleSheet.create({
     card: {
-        backgroundColor: '#FFFFFF',
-        borderRadius: 20,
-        marginBottom: 16,
-        shadowColor: '#6366F1',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.08,
-        shadowRadius: 16,
-        elevation: 5,
-        overflow: 'hidden',
+        backgroundColor: COLORS.card, // Glass opacity
+        borderRadius: THEME_LAYOUT.borderRadius.xl, // 28
+        marginBottom: 20,
+        borderWidth: 1,
+        borderColor: COLORS.white,
+        ...SHADOWS.card,
+        overflow: 'visible', // Allow shadows to spill out
     },
     cardWeb: {
-        maxWidth: LAYOUT.feedMaxWidth - 32,
+        maxWidth: RESPONSIVE_LAYOUT.feedMaxWidth - 32,
         ...Platform.select({
             web: {
                 transition: 'transform 0.2s ease, box-shadow 0.2s ease',
@@ -204,10 +253,10 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'flex-start',
-        padding: 16,
-        paddingBottom: 12,
+        padding: 20,
+        paddingBottom: 16,
         borderBottomWidth: 1,
-        borderBottomColor: '#F1F5F9',
+        borderBottomColor: 'rgba(241, 245, 249, 0.5)', // Transparent border
     },
     cardHeaderRTL: {
         flexDirection: 'row-reverse',
@@ -230,8 +279,8 @@ const styles = StyleSheet.create({
     },
     avatarText: {
         fontSize: 18,
-        fontWeight: '700',
-        color: '#FFFFFF',
+        fontFamily: FONTS.heading.bold,
+        color: COLORS.white,
     },
     userInfo: {
         flex: 1,
@@ -242,8 +291,8 @@ const styles = StyleSheet.create({
     },
     userName: {
         fontSize: 16,
-        fontWeight: '700',
-        color: '#1E293B',
+        fontFamily: FONTS.heading.bold,
+        color: COLORS.text,
         marginRight: 6,
     },
     textRTL: {
@@ -259,8 +308,8 @@ const styles = StyleSheet.create({
     },
     verifiedIcon: {
         fontSize: 10,
-        color: '#FFFFFF',
-        fontWeight: '700',
+        color: COLORS.white,
+        fontFamily: FONTS.body.bold,
     },
     timeAgo: {
         fontSize: 13,
@@ -289,24 +338,26 @@ const styles = StyleSheet.create({
     },
     jobTitle: {
         fontSize: 20,
-        fontWeight: '800',
-        color: '#1E293B',
+        fontFamily: FONTS.heading.bold,
+        color: COLORS.text,
         marginBottom: 12,
         letterSpacing: -0.5,
     },
     priceSection: {
         flexDirection: 'row',
         alignItems: 'center',
-        marginBottom: 14,
+        marginBottom: 16,
         gap: 12,
     },
     priceTag: {
         flexDirection: 'row',
         alignItems: 'flex-start',
-        backgroundColor: '#ECFDF5',
-        paddingHorizontal: 14,
-        paddingVertical: 8,
-        borderRadius: 12,
+        backgroundColor: '#F0FDF4',
+        paddingHorizontal: 16,
+        paddingVertical: 10,
+        borderRadius: 16,
+        borderWidth: 1,
+        borderColor: '#BBF7D0',
     },
     priceCurrency: {
         fontSize: 16,
@@ -316,8 +367,8 @@ const styles = StyleSheet.create({
     },
     priceAmount: {
         fontSize: 28,
-        fontWeight: '800',
-        color: '#10B981',
+        fontFamily: FONTS.heading.bold,
+        color: COLORS.success,
         letterSpacing: -1,
     },
     negotiableBadge: {
@@ -334,7 +385,8 @@ const styles = StyleSheet.create({
     description: {
         fontSize: 15,
         lineHeight: 22,
-        color: '#475569',
+        fontFamily: FONTS.body.regular,
+        color: COLORS.gray[600],
         marginBottom: 14,
     },
     scheduleBox: {
@@ -362,10 +414,10 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     cardFooter: {
-        padding: 16,
-        paddingTop: 12,
+        padding: 20,
+        paddingTop: 16,
         borderTopWidth: 1,
-        borderTopColor: '#F1F5F9',
+        borderTopColor: 'rgba(241, 245, 249, 0.5)',
     },
     cardFooterRTL: {
         // Footer layout adjustments for RTL
