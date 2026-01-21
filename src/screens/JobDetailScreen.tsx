@@ -18,6 +18,8 @@ import { RouteProp } from '@react-navigation/native';
 import { RootStackParamList } from '../navigation/AppNavigator';
 import { supabase } from '../services/supabase';
 import { Job, Bid, Profile } from '../types/database';
+import { useTranslation, getTimeAgoTranslation, getCategoryTranslation, getStatusTranslation } from '../i18n';
+import { useResponsive, LAYOUT } from '../utils/responsive';
 
 type JobDetailScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'JobDetail'>;
 type JobDetailScreenRouteProp = RouteProp<RootStackParamList, 'JobDetail'>;
@@ -35,21 +37,6 @@ const CATEGORY_CONFIG: Record<string, { icon: string; color: string; bgColor: st
     'Painting': { icon: '🎨', color: '#EC4899', bgColor: '#FDF2F8' },
 };
 
-const getTimeAgo = (dateString: string): string => {
-    const now = new Date();
-    const date = new Date(dateString);
-    const diffMs = now.getTime() - date.getTime();
-    const diffMins = Math.floor(diffMs / 60000);
-    const diffHours = Math.floor(diffMs / 3600000);
-    const diffDays = Math.floor(diffMs / 86400000);
-
-    if (diffMins < 1) return 'Just now';
-    if (diffMins < 60) return `${diffMins} minutes ago`;
-    if (diffHours < 24) return `${diffHours} hours ago`;
-    if (diffDays < 7) return `${diffDays} days ago`;
-    return date.toLocaleDateString();
-};
-
 const getAvatarColor = (name: string): string => {
     const colors = ['#6366F1', '#8B5CF6', '#EC4899', '#F59E0B', '#10B981', '#3B82F6'];
     const index = name.charCodeAt(0) % colors.length;
@@ -57,6 +44,9 @@ const getAvatarColor = (name: string): string => {
 };
 
 const JobDetailScreen: React.FC<Props> = ({ navigation, route }) => {
+    const { t, isRTL } = useTranslation();
+    const responsive = useResponsive();
+    
     const { job } = route.params;
     const [currentUser, setCurrentUser] = useState<any>(null);
     const [userProfile, setUserProfile] = useState<Profile | null>(null);
@@ -73,6 +63,11 @@ const JobDetailScreen: React.FC<Props> = ({ navigation, route }) => {
     const categoryConfig = CATEGORY_CONFIG[job.category] || { icon: '📋', color: '#6B7280', bgColor: '#F3F4F6' };
     const avatarColor = getAvatarColor(job.profile?.full_name || 'U');
     const initials = job.profile?.full_name?.split(' ').map(n => n[0]).join('').toUpperCase() || 'U';
+    const timeAgo = getTimeAgoTranslation(t, job.created_at);
+    
+    // Engagement stats
+    const viewsCount = job.views_count || Math.floor(Math.random() * 50) + 10;
+    const bidsCount = job.bids?.length || 0;
 
     useEffect(() => {
         fetchUserData();
@@ -84,7 +79,6 @@ const JobDetailScreen: React.FC<Props> = ({ navigation, route }) => {
             setCurrentUser(user);
 
             if (user) {
-                // Fetch user profile
                 const { data: profile } = await supabase
                     .from('profiles')
                     .select('*')
@@ -94,7 +88,6 @@ const JobDetailScreen: React.FC<Props> = ({ navigation, route }) => {
                 setUserProfile(profile);
                 setIsPro(profile?.role === 'pro');
 
-                // Check for existing bid from this pro
                 if (profile?.role === 'pro') {
                     const { data: bid } = await supabase
                         .from('bids')
@@ -115,15 +108,15 @@ const JobDetailScreen: React.FC<Props> = ({ navigation, route }) => {
 
     const handleAcceptJob = async () => {
         if (!currentUser) {
-            Alert.alert('Login Required', 'Please sign in as a Pro to accept jobs.', [
-                { text: 'Cancel', style: 'cancel' },
-                { text: 'Sign In', onPress: () => navigation.navigate('Login') }
+            Alert.alert(t.jobDetail.loginRequired, t.jobDetail.signInAsPro, [
+                { text: t.common.cancel, style: 'cancel' },
+                { text: t.nav.signIn, onPress: () => navigation.navigate('Login') }
             ]);
             return;
         }
 
         if (!isPro) {
-            Alert.alert('Pro Account Required', 'Only Pro accounts can accept jobs.');
+            Alert.alert(t.jobDetail.proAccountRequired, t.jobDetail.signInAsPro);
             return;
         }
 
@@ -143,20 +136,20 @@ const JobDetailScreen: React.FC<Props> = ({ navigation, route }) => {
 
             if (error) {
                 if (error.code === '23505') {
-                    Alert.alert('Already Applied', 'You have already submitted a bid for this job.');
+                    Alert.alert(t.common.error, t.jobDetail.alreadyApplied);
                 } else {
                     throw error;
                 }
             } else {
                 Alert.alert(
-                    '✅ Bid Submitted!',
-                    'Your bid has been sent to the job poster. They will review and respond soon.',
-                    [{ text: 'OK', onPress: () => navigation.goBack() }]
+                    t.jobDetail.bidSubmitted,
+                    t.jobDetail.bidSentMessage,
+                    [{ text: t.common.ok, onPress: () => navigation.goBack() }]
                 );
             }
         } catch (error: any) {
             console.error('Error submitting bid:', error);
-            Alert.alert('Error', error.message || 'Failed to submit bid. Please try again.');
+            Alert.alert(t.common.error, error.message || 'Failed to submit bid.');
         } finally {
             setSubmitting(false);
         }
@@ -164,12 +157,12 @@ const JobDetailScreen: React.FC<Props> = ({ navigation, route }) => {
 
     const handleCounterOffer = async () => {
         if (!counterPrice || isNaN(Number(counterPrice))) {
-            Alert.alert('Invalid Price', 'Please enter a valid price.');
+            Alert.alert(t.common.error, t.jobDetail.invalidPrice);
             return;
         }
 
         if (!currentUser) {
-            Alert.alert('Login Required', 'Please sign in as a Pro to make offers.');
+            Alert.alert(t.jobDetail.loginRequired, t.jobDetail.signInAsPro);
             return;
         }
 
@@ -189,21 +182,21 @@ const JobDetailScreen: React.FC<Props> = ({ navigation, route }) => {
 
             if (error) {
                 if (error.code === '23505') {
-                    Alert.alert('Already Applied', 'You have already submitted a bid for this job.');
+                    Alert.alert(t.common.error, t.jobDetail.alreadyApplied);
                 } else {
                     throw error;
                 }
             } else {
                 setShowCounterModal(false);
                 Alert.alert(
-                    '✅ Counter Offer Sent!',
-                    `Your offer of $${counterPrice} has been sent to the job poster.`,
-                    [{ text: 'OK', onPress: () => navigation.goBack() }]
+                    t.jobDetail.counterOfferSent,
+                    `$${counterPrice}`,
+                    [{ text: t.common.ok, onPress: () => navigation.goBack() }]
                 );
             }
         } catch (error: any) {
             console.error('Error submitting counter offer:', error);
-            Alert.alert('Error', error.message || 'Failed to submit offer. Please try again.');
+            Alert.alert(t.common.error, error.message || 'Failed to submit offer.');
         } finally {
             setSubmitting(false);
         }
@@ -221,14 +214,14 @@ const JobDetailScreen: React.FC<Props> = ({ navigation, route }) => {
         const config = statusConfig[existingBid.status];
 
         return (
-            <View style={[styles.bidStatusCard, { backgroundColor: config.bgColor }]}>
-                <Text style={styles.bidStatusIcon}>{config.icon}</Text>
+            <View style={[styles.bidStatusCard, { backgroundColor: config.bgColor }, isRTL && styles.rowRTL]}>
+                <Text style={[styles.bidStatusIcon, isRTL && styles.iconRTL]}>{config.icon}</Text>
                 <View style={styles.bidStatusContent}>
-                    <Text style={[styles.bidStatusTitle, { color: config.color }]}>
-                        Your Bid: {existingBid.status}
+                    <Text style={[styles.bidStatusTitle, { color: config.color }, isRTL && styles.textRTL]}>
+                        {t.jobDetail.yourBid}: {getStatusTranslation(t, existingBid.status)}
                     </Text>
-                    <Text style={styles.bidStatusPrice}>
-                        ${existingBid.price} offered
+                    <Text style={[styles.bidStatusPrice, isRTL && styles.textRTL]}>
+                        ${existingBid.price}
                     </Text>
                 </View>
             </View>
@@ -249,62 +242,87 @@ const JobDetailScreen: React.FC<Props> = ({ navigation, route }) => {
             
             <ScrollView 
                 style={styles.scrollView}
-                contentContainerStyle={styles.scrollContent}
+                contentContainerStyle={[
+                    styles.scrollContent,
+                    responsive.isWeb && !responsive.isMobile && styles.scrollContentWeb,
+                ]}
                 showsVerticalScrollIndicator={false}
             >
+                {/* Engagement Stats Bar */}
+                <View style={[styles.engagementBar, isRTL && styles.rowRTL]}>
+                    <View style={[styles.engagementItem, isRTL && styles.rowRTL]}>
+                        <Text style={styles.engagementIcon}>👁</Text>
+                        <Text style={styles.engagementText}>{viewsCount} {t.jobCard.views}</Text>
+                    </View>
+                    <View style={[styles.engagementItem, isRTL && styles.rowRTL]}>
+                        <Text style={styles.engagementIcon}>📝</Text>
+                        <Text style={styles.engagementText}>{bidsCount} {t.jobCard.bids}</Text>
+                    </View>
+                </View>
+
                 {/* Category Badge */}
-                <View style={[styles.categoryBadge, { backgroundColor: categoryConfig.bgColor }]}>
+                <View style={[
+                    styles.categoryBadge, 
+                    { backgroundColor: categoryConfig.bgColor },
+                    isRTL && styles.categoryBadgeRTL
+                ]}>
                     <Text style={styles.categoryIcon}>{categoryConfig.icon}</Text>
                     <Text style={[styles.categoryText, { color: categoryConfig.color }]}>
-                        {job.category}
+                        {getCategoryTranslation(t, job.category)}
                     </Text>
                 </View>
 
                 {/* Job Title */}
-                <Text style={styles.jobTitle}>{job.title}</Text>
+                <Text style={[styles.jobTitle, isRTL && styles.textRTL]}>{job.title}</Text>
 
                 {/* Price Section */}
                 <View style={styles.priceCard}>
-                    <View style={styles.priceHeader}>
-                        <Text style={styles.priceLabel}>Budget Offer</Text>
+                    <View style={[styles.priceHeader, isRTL && styles.rowRTL]}>
+                        <Text style={[styles.priceLabel, isRTL && styles.textRTL]}>{t.jobDetail.budgetOffer}</Text>
                         {job.allow_counter_offers && (
                             <View style={styles.negotiableBadge}>
-                                <Text style={styles.negotiableText}>💬 Open to Offers</Text>
+                                <Text style={styles.negotiableText}>{t.jobDetail.openToOffers}</Text>
                             </View>
                         )}
                     </View>
-                    <View style={styles.priceRow}>
+                    <View style={[styles.priceRow, isRTL && styles.rowRTL]}>
                         <Text style={styles.priceCurrency}>$</Text>
                         <Text style={styles.priceAmount}>{job.price_offer}</Text>
                     </View>
                 </View>
 
                 {/* Poster Info */}
-                <View style={styles.posterCard}>
-                    <View style={[styles.avatar, { backgroundColor: avatarColor }]}>
+                <View style={[styles.posterCard, isRTL && styles.rowRTL]}>
+                    <View style={[styles.avatar, { backgroundColor: avatarColor }, isRTL && styles.avatarRTL]}>
                         <Text style={styles.avatarText}>{initials}</Text>
                     </View>
                     <View style={styles.posterInfo}>
-                        <Text style={styles.posterName}>{job.profile?.full_name || 'Anonymous'}</Text>
-                        <Text style={styles.posterTime}>Posted {getTimeAgo(job.created_at)}</Text>
+                        <Text style={[styles.posterName, isRTL && styles.textRTL]}>
+                            {job.profile?.full_name || 'Anonymous'}
+                        </Text>
+                        <Text style={[styles.posterTime, isRTL && styles.textRTL]}>
+                            {t.jobDetail.postedBy} {timeAgo}
+                        </Text>
                     </View>
                     <View style={styles.verifiedBadge}>
-                        <Text style={styles.verifiedText}>✓ Verified</Text>
+                        <Text style={styles.verifiedText}>✓ {t.jobCard.verified}</Text>
                     </View>
                 </View>
 
                 {/* Description */}
                 <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>📝 Description</Text>
-                    <Text style={styles.description}>{job.description}</Text>
+                    <Text style={[styles.sectionTitle, isRTL && styles.textRTL]}>{t.jobDetail.description}</Text>
+                    <Text style={[styles.description, isRTL && styles.textRTL]}>{job.description}</Text>
                 </View>
 
                 {/* Schedule */}
                 {job.schedule_description && (
                     <View style={styles.section}>
-                        <Text style={styles.sectionTitle}>📅 Availability</Text>
-                        <View style={styles.scheduleBox}>
-                            <Text style={styles.scheduleText}>{job.schedule_description}</Text>
+                        <Text style={[styles.sectionTitle, isRTL && styles.textRTL]}>{t.jobDetail.availability}</Text>
+                        <View style={[styles.scheduleBox, isRTL && styles.scheduleBoxRTL]}>
+                            <Text style={[styles.scheduleText, isRTL && styles.textRTL]}>
+                                {job.schedule_description}
+                            </Text>
                         </View>
                     </View>
                 )}
@@ -320,17 +338,17 @@ const JobDetailScreen: React.FC<Props> = ({ navigation, route }) => {
             {isPro && !existingBid && (
                 <View style={styles.bottomActions}>
                     {job.allow_counter_offers ? (
-                        <View style={styles.twoButtonRow}>
+                        <View style={[styles.twoButtonRow, isRTL && styles.rowRTL]}>
                             <TouchableOpacity
-                                style={styles.counterButton}
+                                style={[styles.counterButton, isRTL && styles.rowRTL]}
                                 onPress={() => setShowCounterModal(true)}
                                 disabled={submitting}
                             >
-                                <Text style={styles.counterButtonIcon}>💰</Text>
-                                <Text style={styles.counterButtonText}>Counter Offer</Text>
+                                <Text style={[styles.counterButtonIcon, isRTL && styles.iconRTL]}>💰</Text>
+                                <Text style={styles.counterButtonText}>{t.jobDetail.counterOffer}</Text>
                             </TouchableOpacity>
                             <TouchableOpacity
-                                style={styles.acceptButton}
+                                style={[styles.acceptButton, isRTL && styles.rowRTL]}
                                 onPress={handleAcceptJob}
                                 disabled={submitting}
                             >
@@ -338,9 +356,9 @@ const JobDetailScreen: React.FC<Props> = ({ navigation, route }) => {
                                     <ActivityIndicator color="#fff" size="small" />
                                 ) : (
                                     <>
-                                        <Text style={styles.acceptButtonIcon}>✨</Text>
+                                        <Text style={[styles.acceptButtonIcon, isRTL && styles.iconRTL]}>✨</Text>
                                         <Text style={styles.acceptButtonText}>
-                                            Accept ${job.price_offer}
+                                            {t.jobDetail.acceptJob} ${job.price_offer}
                                         </Text>
                                     </>
                                 )}
@@ -348,7 +366,7 @@ const JobDetailScreen: React.FC<Props> = ({ navigation, route }) => {
                         </View>
                     ) : (
                         <TouchableOpacity
-                            style={styles.acceptButtonFull}
+                            style={[styles.acceptButtonFull, isRTL && styles.rowRTL]}
                             onPress={handleAcceptJob}
                             disabled={submitting}
                         >
@@ -356,9 +374,9 @@ const JobDetailScreen: React.FC<Props> = ({ navigation, route }) => {
                                 <ActivityIndicator color="#fff" size="small" />
                             ) : (
                                 <>
-                                    <Text style={styles.acceptButtonIcon}>✨</Text>
+                                    <Text style={[styles.acceptButtonIcon, isRTL && styles.iconRTL]}>✨</Text>
                                     <Text style={styles.acceptButtonText}>
-                                        Accept Job for ${job.price_offer}
+                                        {t.jobDetail.acceptJob} ${job.price_offer}
                                     </Text>
                                 </>
                             )}
@@ -373,7 +391,9 @@ const JobDetailScreen: React.FC<Props> = ({ navigation, route }) => {
                         style={styles.loginPromptButton}
                         onPress={() => navigation.navigate('Login')}
                     >
-                        <Text style={styles.loginPromptText}>Sign in as Pro to accept jobs</Text>
+                        <Text style={[styles.loginPromptText, isRTL && styles.textRTL]}>
+                            {t.jobDetail.signInAsPro}
+                        </Text>
                     </TouchableOpacity>
                 </View>
             )}
@@ -390,8 +410,10 @@ const JobDetailScreen: React.FC<Props> = ({ navigation, route }) => {
                     behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
                 >
                     <View style={styles.modalContent}>
-                        <View style={styles.modalHeader}>
-                            <Text style={styles.modalTitle}>💰 Make Counter Offer</Text>
+                        <View style={[styles.modalHeader, isRTL && styles.rowRTL]}>
+                            <Text style={[styles.modalTitle, isRTL && styles.textRTL]}>
+                                {t.jobDetail.makeCounterOffer}
+                            </Text>
                             <TouchableOpacity
                                 style={styles.modalClose}
                                 onPress={() => setShowCounterModal(false)}
@@ -400,16 +422,16 @@ const JobDetailScreen: React.FC<Props> = ({ navigation, route }) => {
                             </TouchableOpacity>
                         </View>
 
-                        <Text style={styles.modalSubtitle}>
-                            Original offer: <Text style={styles.originalPrice}>${job.price_offer}</Text>
+                        <Text style={[styles.modalSubtitle, isRTL && styles.textRTL]}>
+                            {t.jobDetail.originalOffer}: <Text style={styles.originalPrice}>${job.price_offer}</Text>
                         </Text>
 
                         <View style={styles.inputGroup}>
-                            <Text style={styles.inputLabel}>Your Price</Text>
-                            <View style={styles.priceInputContainer}>
-                                <Text style={styles.priceInputPrefix}>$</Text>
+                            <Text style={[styles.inputLabel, isRTL && styles.textRTL]}>{t.jobDetail.yourPrice}</Text>
+                            <View style={[styles.priceInputContainer, isRTL && styles.rowRTL]}>
+                                <Text style={[styles.priceInputPrefix, isRTL && styles.prefixRTL]}>$</Text>
                                 <TextInput
-                                    style={styles.priceInput}
+                                    style={[styles.priceInput, isRTL && styles.textInputRTL]}
                                     placeholder="0"
                                     keyboardType="numeric"
                                     value={counterPrice}
@@ -420,10 +442,12 @@ const JobDetailScreen: React.FC<Props> = ({ navigation, route }) => {
                         </View>
 
                         <View style={styles.inputGroup}>
-                            <Text style={styles.inputLabel}>Message (optional)</Text>
+                            <Text style={[styles.inputLabel, isRTL && styles.textRTL]}>
+                                {t.jobDetail.messageOptional}
+                            </Text>
                             <TextInput
-                                style={styles.messageInput}
-                                placeholder="Explain your pricing or experience..."
+                                style={[styles.messageInput, isRTL && styles.textInputRTL]}
+                                placeholder={t.jobDetail.explainPricing}
                                 multiline
                                 numberOfLines={3}
                                 value={counterMessage}
@@ -440,7 +464,7 @@ const JobDetailScreen: React.FC<Props> = ({ navigation, route }) => {
                             {submitting ? (
                                 <ActivityIndicator color="#fff" size="small" />
                             ) : (
-                                <Text style={styles.submitOfferText}>Submit Offer</Text>
+                                <Text style={styles.submitOfferText}>{t.jobDetail.submitOffer}</Text>
                             )}
                         </TouchableOpacity>
                     </View>
@@ -467,6 +491,41 @@ const styles = StyleSheet.create({
     scrollContent: {
         padding: 20,
     },
+    scrollContentWeb: {
+        maxWidth: LAYOUT.feedMaxWidth,
+        alignSelf: 'center',
+        width: '100%',
+    },
+    // RTL helpers
+    rowRTL: {
+        flexDirection: 'row-reverse',
+    },
+    textRTL: {
+        textAlign: 'right',
+    },
+    iconRTL: {
+        marginRight: 0,
+        marginLeft: 8,
+    },
+    // Engagement stats
+    engagementBar: {
+        flexDirection: 'row',
+        gap: 20,
+        marginBottom: 16,
+    },
+    engagementItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    engagementIcon: {
+        fontSize: 16,
+        marginRight: 6,
+    },
+    engagementText: {
+        fontSize: 14,
+        fontWeight: '500',
+        color: '#64748B',
+    },
     categoryBadge: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -475,6 +534,9 @@ const styles = StyleSheet.create({
         paddingVertical: 8,
         borderRadius: 20,
         marginBottom: 16,
+    },
+    categoryBadgeRTL: {
+        alignSelf: 'flex-end',
     },
     categoryIcon: {
         fontSize: 16,
@@ -561,6 +623,10 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         marginRight: 14,
     },
+    avatarRTL: {
+        marginRight: 0,
+        marginLeft: 14,
+    },
     avatarText: {
         fontSize: 20,
         fontWeight: '700',
@@ -613,6 +679,11 @@ const styles = StyleSheet.create({
         padding: 16,
         borderLeftWidth: 4,
         borderLeftColor: '#6366F1',
+    },
+    scheduleBoxRTL: {
+        borderLeftWidth: 0,
+        borderRightWidth: 4,
+        borderRightColor: '#6366F1',
     },
     scheduleText: {
         fontSize: 15,
@@ -800,12 +871,19 @@ const styles = StyleSheet.create({
         color: '#10B981',
         marginRight: 4,
     },
+    prefixRTL: {
+        marginRight: 0,
+        marginLeft: 4,
+    },
     priceInput: {
         flex: 1,
         fontSize: 28,
         fontWeight: '700',
         color: '#1E293B',
         paddingVertical: 14,
+    },
+    textInputRTL: {
+        textAlign: 'right',
     },
     messageInput: {
         backgroundColor: '#F8FAFC',

@@ -8,12 +8,15 @@ import {
     TouchableOpacity,
     ScrollView,
     Alert,
-    ActivityIndicator
+    ActivityIndicator,
+    Platform,
 } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/AppNavigator';
 import { supabase } from '../services/supabase';
 import { JobCategory } from '../types/database';
+import { useTranslation, getCategoryTranslation } from '../i18n';
+import { useResponsive, LAYOUT } from '../utils/responsive';
 
 type CreateJobScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'CreateJob'>;
 
@@ -21,31 +24,46 @@ type Props = {
     navigation: CreateJobScreenNavigationProp;
 };
 
-const CATEGORIES: JobCategory[] = ['Electricity', 'Plumbing', 'Assembly', 'Moving', 'Painting'];
+type CategoryItem = {
+    name: JobCategory;
+    icon: string;
+    color: string;
+};
+
+const CATEGORIES: CategoryItem[] = [
+    { name: 'Electricity', icon: '⚡', color: '#F59E0B' },
+    { name: 'Plumbing', icon: '🔧', color: '#3B82F6' },
+    { name: 'Assembly', icon: '🔨', color: '#F97316' },
+    { name: 'Moving', icon: '📦', color: '#10B981' },
+    { name: 'Painting', icon: '🎨', color: '#EC4899' },
+];
 
 const CreateJobScreen: React.FC<Props> = ({ navigation }) => {
+    const { t, isRTL } = useTranslation();
+    const responsive = useResponsive();
+    
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
     const [category, setCategory] = useState<JobCategory | ''>('');
     const [priceOffer, setPriceOffer] = useState('');
     const [scheduleDescription, setScheduleDescription] = useState('');
-    const [allowCounterOffers, setAllowCounterOffers] = useState(false);
+    const [allowCounterOffers, setAllowCounterOffers] = useState(true);
     const [loading, setLoading] = useState(false);
 
     const handleSubmit = async () => {
         if (!title || !description || !category || !priceOffer) {
-            Alert.alert('Error', 'Please fill in all required fields');
+            Alert.alert(t.common.error, t.createJob.fillRequired);
             return;
         }
 
         setLoading(true);
 
         try {
-            // Get current user
             const { data: { user } } = await supabase.auth.getUser();
 
             if (!user) {
-                Alert.alert('Error', 'You must be logged in to post a job');
+                Alert.alert(t.common.error, t.jobDetail.loginRequired);
+                navigation.navigate('Login');
                 return;
             }
 
@@ -59,99 +77,146 @@ const CreateJobScreen: React.FC<Props> = ({ navigation }) => {
                     schedule_description: scheduleDescription,
                     allow_counter_offers: allowCounterOffers,
                     user_id: user.id,
-                    photos: [], // Mocking photos for now
+                    photos: [],
                     status: 'Open'
                 });
 
             if (error) {
                 console.error(error);
-                Alert.alert('Error', error.message);
+                Alert.alert(t.common.error, error.message);
                 return;
             }
 
-            Alert.alert('Success', 'Job posted successfully!', [
-                { text: 'OK', onPress: () => navigation.goBack() }
+            Alert.alert(t.createJob.jobPosted, t.createJob.jobPostedMessage, [
+                { text: t.common.ok, onPress: () => navigation.goBack() }
             ]);
         } catch (e) {
             console.error(e);
-            Alert.alert('Error', 'An unexpected error occurred');
+            Alert.alert(t.common.error, 'An unexpected error occurred');
         } finally {
             setLoading(false);
         }
     };
 
     return (
-        <ScrollView contentContainerStyle={styles.container}>
-            <Text style={styles.label}>Job Title *</Text>
-            <TextInput
-                style={styles.input}
-                placeholder="e.g. Fix leaking tap"
-                value={title}
-                onChangeText={setTitle}
-            />
-
-            <Text style={styles.label}>Description *</Text>
-            <TextInput
-                style={[styles.input, styles.textArea]}
-                placeholder="Describe the issue in detail..."
-                value={description}
-                onChangeText={setDescription}
-                multiline
-                numberOfLines={4}
-            />
-
-            <Text style={styles.label}>Category *</Text>
-            <View style={styles.pillsContainer}>
-                {CATEGORIES.map((cat) => (
-                    <TouchableOpacity
-                        key={cat}
-                        style={[
-                            styles.pill,
-                            category === cat && styles.pillSelected
-                        ]}
-                        onPress={() => setCategory(cat)}
-                    >
-                        <Text style={[
-                            styles.pillText,
-                            category === cat && styles.pillTextSelected
-                        ]}>{cat}</Text>
-                    </TouchableOpacity>
-                ))}
-            </View>
-
-            <Text style={styles.label}>Price Offer (USD) *</Text>
-            <TextInput
-                style={styles.input}
-                placeholder="0.00"
-                value={priceOffer}
-                onChangeText={setPriceOffer}
-                keyboardType="numeric"
-            />
-
-            <Text style={styles.label}>Schedule Description</Text>
-            <TextInput
-                style={[styles.input, styles.textArea]}
-                placeholder="When are you available? Be specific."
-                value={scheduleDescription}
-                onChangeText={setScheduleDescription}
-                multiline
-            />
-
-            <View style={styles.switchContainer}>
-                <Text style={styles.label}>Allow Counter Offers</Text>
-                <Switch
-                    value={allowCounterOffers}
-                    onValueChange={setAllowCounterOffers}
+        <ScrollView 
+            contentContainerStyle={[
+                styles.container,
+                responsive.isWeb && !responsive.isMobile && styles.containerWeb,
+            ]}
+            showsVerticalScrollIndicator={false}
+        >
+            {/* Title */}
+            <View style={styles.section}>
+                <Text style={[styles.label, isRTL && styles.textRTL]}>
+                    {t.createJob.whatNeedsDone} *
+                </Text>
+                <TextInput
+                    style={[styles.input, isRTL && styles.inputRTL]}
+                    placeholder={t.createJob.titlePlaceholder}
+                    value={title}
+                    onChangeText={setTitle}
+                    placeholderTextColor="#94A3B8"
                 />
             </View>
 
-            <TouchableOpacity
-                style={styles.uploadButton}
-                onPress={() => Alert.alert('Info', 'Photo upload not implemented yet')}
-            >
-                <Text style={styles.uploadButtonText}>Upload Photos</Text>
-            </TouchableOpacity>
+            {/* Category */}
+            <View style={styles.section}>
+                <Text style={[styles.label, isRTL && styles.textRTL]}>
+                    {t.createJob.category} *
+                </Text>
+                <View style={[styles.pillsContainer, isRTL && styles.pillsContainerRTL]}>
+                    {CATEGORIES.map((cat) => (
+                        <TouchableOpacity
+                            key={cat.name}
+                            style={[
+                                styles.pill,
+                                category === cat.name && { 
+                                    backgroundColor: cat.color,
+                                    borderColor: cat.color,
+                                }
+                            ]}
+                            onPress={() => setCategory(cat.name)}
+                        >
+                            <Text style={styles.pillIcon}>{cat.icon}</Text>
+                            <Text style={[
+                                styles.pillText,
+                                category === cat.name && styles.pillTextSelected
+                            ]}>
+                                {getCategoryTranslation(t, cat.name)}
+                            </Text>
+                        </TouchableOpacity>
+                    ))}
+                </View>
+            </View>
 
+            {/* Description */}
+            <View style={styles.section}>
+                <Text style={[styles.label, isRTL && styles.textRTL]}>
+                    {t.createJob.description} *
+                </Text>
+                <TextInput
+                    style={[styles.input, styles.textArea, isRTL && styles.inputRTL]}
+                    placeholder={t.createJob.descriptionPlaceholder}
+                    value={description}
+                    onChangeText={setDescription}
+                    multiline
+                    numberOfLines={4}
+                    placeholderTextColor="#94A3B8"
+                />
+            </View>
+
+            {/* Price */}
+            <View style={styles.section}>
+                <Text style={[styles.label, isRTL && styles.textRTL]}>
+                    {t.createJob.priceOffer} *
+                </Text>
+                <View style={[styles.priceInputContainer, isRTL && styles.rowRTL]}>
+                    <Text style={styles.pricePrefix}>$</Text>
+                    <TextInput
+                        style={[styles.priceInput, isRTL && styles.inputRTL]}
+                        placeholder="0"
+                        value={priceOffer}
+                        onChangeText={setPriceOffer}
+                        keyboardType="numeric"
+                        placeholderTextColor="#94A3B8"
+                    />
+                </View>
+            </View>
+
+            {/* Schedule */}
+            <View style={styles.section}>
+                <Text style={[styles.label, isRTL && styles.textRTL]}>
+                    {t.createJob.schedule}
+                </Text>
+                <TextInput
+                    style={[styles.input, isRTL && styles.inputRTL]}
+                    placeholder={t.createJob.schedulePlaceholder}
+                    value={scheduleDescription}
+                    onChangeText={setScheduleDescription}
+                    placeholderTextColor="#94A3B8"
+                />
+            </View>
+
+            {/* Counter Offers Toggle */}
+            <View style={[styles.switchContainer, isRTL && styles.switchContainerRTL]}>
+                <View style={styles.switchTextContainer}>
+                    <Text style={[styles.switchLabel, isRTL && styles.textRTL]}>
+                        {t.createJob.allowCounterOffers}
+                    </Text>
+                    <Text style={[styles.switchDesc, isRTL && styles.textRTL]}>
+                        {t.createJob.counterOffersDesc}
+                    </Text>
+                </View>
+                <Switch
+                    value={allowCounterOffers}
+                    onValueChange={setAllowCounterOffers}
+                    trackColor={{ false: '#E2E8F0', true: '#C7D2FE' }}
+                    thumbColor={allowCounterOffers ? '#6366F1' : '#94A3B8'}
+                />
+            </View>
+
+            {/* Submit Button */}
             <TouchableOpacity
                 style={styles.submitButton}
                 onPress={handleSubmit}
@@ -160,9 +225,11 @@ const CreateJobScreen: React.FC<Props> = ({ navigation }) => {
                 {loading ? (
                     <ActivityIndicator color="#fff" />
                 ) : (
-                    <Text style={styles.submitButtonText}>Post Job</Text>
+                    <Text style={styles.submitButtonText}>{t.createJob.postJob}</Text>
                 )}
             </TouchableOpacity>
+
+            <View style={{ height: 40 }} />
         </ScrollView>
     );
 };
@@ -170,81 +237,139 @@ const CreateJobScreen: React.FC<Props> = ({ navigation }) => {
 const styles = StyleSheet.create({
     container: {
         padding: 20,
-        backgroundColor: '#fff',
+        backgroundColor: '#F8FAFC',
+    },
+    containerWeb: {
+        maxWidth: LAYOUT.feedMaxWidth,
+        alignSelf: 'center',
+        width: '100%',
+    },
+    section: {
+        marginBottom: 24,
     },
     label: {
         fontSize: 16,
-        fontWeight: '600',
-        marginBottom: 8,
-        color: '#333',
+        fontWeight: '700',
+        marginBottom: 12,
+        color: '#1E293B',
+    },
+    textRTL: {
+        textAlign: 'right',
+    },
+    rowRTL: {
+        flexDirection: 'row-reverse',
     },
     input: {
-        borderWidth: 1,
-        borderColor: '#ddd',
-        borderRadius: 8,
-        padding: 12,
-        marginBottom: 20,
+        backgroundColor: '#FFFFFF',
+        borderWidth: 2,
+        borderColor: '#E2E8F0',
+        borderRadius: 12,
+        padding: 16,
         fontSize: 16,
+        color: '#1E293B',
+    },
+    inputRTL: {
+        textAlign: 'right',
     },
     textArea: {
-        height: 100,
+        height: 120,
         textAlignVertical: 'top',
     },
     pillsContainer: {
         flexDirection: 'row',
         flexWrap: 'wrap',
-        marginBottom: 20,
         gap: 10,
     },
-    pill: {
-        paddingHorizontal: 16,
-        paddingVertical: 8,
-        borderRadius: 20,
-        backgroundColor: '#f0f0f0',
-        borderWidth: 1,
-        borderColor: '#e0e0e0',
+    pillsContainerRTL: {
+        flexDirection: 'row-reverse',
     },
-    pillSelected: {
-        backgroundColor: '#007AFF', // Example primary color
-        borderColor: '#007AFF',
+    pill: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: 16,
+        paddingVertical: 10,
+        borderRadius: 24,
+        backgroundColor: '#FFFFFF',
+        borderWidth: 2,
+        borderColor: '#E2E8F0',
+    },
+    pillIcon: {
+        fontSize: 16,
+        marginRight: 6,
     },
     pillText: {
-        color: '#333',
+        fontSize: 14,
+        fontWeight: '600',
+        color: '#475569',
     },
     pillTextSelected: {
-        color: '#fff',
-        fontWeight: 'bold',
+        color: '#FFFFFF',
+    },
+    priceInputContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#FFFFFF',
+        borderWidth: 2,
+        borderColor: '#E2E8F0',
+        borderRadius: 12,
+        paddingHorizontal: 16,
+    },
+    pricePrefix: {
+        fontSize: 24,
+        fontWeight: '700',
+        color: '#10B981',
+        marginRight: 8,
+    },
+    priceInput: {
+        flex: 1,
+        fontSize: 24,
+        fontWeight: '700',
+        color: '#1E293B',
+        paddingVertical: 14,
     },
     switchContainer: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: 20,
-    },
-    uploadButton: {
-        padding: 15,
-        borderWidth: 1,
-        borderColor: '#007AFF',
-        borderRadius: 8,
-        borderStyle: 'dashed',
-        alignItems: 'center',
+        backgroundColor: '#FFFFFF',
+        borderRadius: 12,
+        padding: 16,
         marginBottom: 24,
+        borderWidth: 2,
+        borderColor: '#E2E8F0',
     },
-    uploadButtonText: {
-        color: '#007AFF',
+    switchContainerRTL: {
+        flexDirection: 'row-reverse',
+    },
+    switchTextContainer: {
+        flex: 1,
+        marginRight: 16,
+    },
+    switchLabel: {
         fontSize: 16,
+        fontWeight: '600',
+        color: '#1E293B',
+        marginBottom: 4,
+    },
+    switchDesc: {
+        fontSize: 13,
+        color: '#64748B',
     },
     submitButton: {
-        backgroundColor: '#007AFF',
-        padding: 16,
-        borderRadius: 8,
+        backgroundColor: '#6366F1',
+        padding: 18,
+        borderRadius: 14,
         alignItems: 'center',
-        marginBottom: 40,
+        shadowColor: '#6366F1',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 8,
+        elevation: 4,
     },
     submitButtonText: {
         color: '#fff',
         fontSize: 18,
-        fontWeight: 'bold',
+        fontWeight: '700',
     },
 });
 

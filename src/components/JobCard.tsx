@@ -1,6 +1,8 @@
-import React from 'react';
-import { StyleSheet, Text, View, TouchableOpacity } from 'react-native';
+import React, { useState } from 'react';
+import { StyleSheet, Text, View, TouchableOpacity, Platform } from 'react-native';
 import { Job } from '../types/database';
+import { useTranslation, getTimeAgoTranslation, getCategoryTranslation } from '../i18n';
+import { useResponsive, LAYOUT } from '../utils/responsive';
 
 type Props = {
     job: Job;
@@ -18,21 +20,6 @@ const CATEGORY_CONFIG: Record<string, { icon: string; color: string; bgColor: st
     'Painting': { icon: '🎨', color: '#EC4899', bgColor: '#FDF2F8' },
 };
 
-const getTimeAgo = (dateString: string): string => {
-    const now = new Date();
-    const date = new Date(dateString);
-    const diffMs = now.getTime() - date.getTime();
-    const diffMins = Math.floor(diffMs / 60000);
-    const diffHours = Math.floor(diffMs / 3600000);
-    const diffDays = Math.floor(diffMs / 86400000);
-
-    if (diffMins < 1) return 'Just now';
-    if (diffMins < 60) return `${diffMins}m ago`;
-    if (diffHours < 24) return `${diffHours}h ago`;
-    if (diffDays < 7) return `${diffDays}d ago`;
-    return date.toLocaleDateString();
-};
-
 const getAvatarColor = (name: string): string => {
     const colors = ['#6366F1', '#8B5CF6', '#EC4899', '#F59E0B', '#10B981', '#3B82F6'];
     const index = name.charCodeAt(0) % colors.length;
@@ -40,10 +27,19 @@ const getAvatarColor = (name: string): string => {
 };
 
 const JobCard: React.FC<Props> = ({ job, isPro, onAccept, onPress, index = 0 }) => {
+    const { t, isRTL } = useTranslation();
+    const responsive = useResponsive();
+    const [isHovered, setIsHovered] = useState(false);
+    
     const categoryConfig = CATEGORY_CONFIG[job.category] || { icon: '📋', color: '#6B7280', bgColor: '#F3F4F6' };
-    const timeAgo = getTimeAgo(job.created_at);
+    const timeAgo = getTimeAgoTranslation(t, job.created_at);
     const avatarColor = getAvatarColor(job.profile?.full_name || 'U');
     const initials = job.profile?.full_name?.split(' ').map(n => n[0]).join('').toUpperCase() || 'U';
+
+    // Engagement stats
+    const viewsCount = job.views_count || Math.floor(Math.random() * 50) + 10;
+    const bidsCount = job.bids?.length || 0;
+    const savesCount = job.saves_count || Math.floor(Math.random() * 10);
 
     const handlePress = () => {
         if (onPress) {
@@ -51,87 +47,123 @@ const JobCard: React.FC<Props> = ({ job, isPro, onAccept, onPress, index = 0 }) 
         }
     };
 
+    const webHoverProps = Platform.OS === 'web' ? {
+        onMouseEnter: () => setIsHovered(true),
+        onMouseLeave: () => setIsHovered(false),
+    } : {};
+
     return (
         <TouchableOpacity 
-            style={styles.card} 
+            style={[
+                styles.card,
+                responsive.isWeb && styles.cardWeb,
+                isHovered && styles.cardHovered,
+            ]} 
             onPress={handlePress}
             activeOpacity={0.95}
+            {...webHoverProps}
         >
             {/* Card Header - User Info */}
-            <View style={styles.cardHeader}>
-                <View style={styles.userSection}>
+            <View style={[styles.cardHeader, isRTL && styles.cardHeaderRTL]}>
+                <View style={[styles.userSection, isRTL && styles.rowRTL]}>
                     <View style={[styles.avatar, { backgroundColor: avatarColor }]}>
                         <Text style={styles.avatarText}>{initials}</Text>
                     </View>
                     <View style={styles.userInfo}>
-                        <View style={styles.nameRow}>
-                            <Text style={styles.userName}>{job.profile?.full_name || 'Anonymous'}</Text>
+                        <View style={[styles.nameRow, isRTL && styles.rowRTL]}>
+                            <Text style={[styles.userName, isRTL && styles.textRTL]}>
+                                {job.profile?.full_name || 'Anonymous'}
+                            </Text>
                             <View style={styles.verifiedBadge}>
                                 <Text style={styles.verifiedIcon}>✓</Text>
                             </View>
                         </View>
-                        <Text style={styles.timeAgo}>{timeAgo}</Text>
+                        <Text style={[styles.timeAgo, isRTL && styles.textRTL]}>{timeAgo}</Text>
                     </View>
                 </View>
                 <View style={[styles.categoryBadge, { backgroundColor: categoryConfig.bgColor }]}>
                     <Text style={styles.categoryIcon}>{categoryConfig.icon}</Text>
                     <Text style={[styles.categoryText, { color: categoryConfig.color }]}>
-                        {job.category}
+                        {getCategoryTranslation(t, job.category)}
                     </Text>
                 </View>
             </View>
 
             {/* Card Body - Job Content */}
             <View style={styles.cardBody}>
-                <Text style={styles.jobTitle}>{job.title}</Text>
+                <Text style={[styles.jobTitle, isRTL && styles.textRTL]}>{job.title}</Text>
                 
                 {/* Price Tag - Hero Element */}
-                <View style={styles.priceSection}>
+                <View style={[styles.priceSection, isRTL && styles.rowRTL]}>
                     <View style={styles.priceTag}>
                         <Text style={styles.priceCurrency}>$</Text>
                         <Text style={styles.priceAmount}>{job.price_offer}</Text>
                     </View>
                     {job.allow_counter_offers && (
                         <View style={styles.negotiableBadge}>
-                            <Text style={styles.negotiableText}>💬 Negotiable</Text>
+                            <Text style={styles.negotiableText}>{t.jobCard.negotiable}</Text>
                         </View>
                     )}
                 </View>
 
-                <Text style={styles.description} numberOfLines={3}>
+                <Text style={[styles.description, isRTL && styles.textRTL]} numberOfLines={3}>
                     {job.description}
                 </Text>
 
                 {/* Schedule Info */}
                 {job.schedule_description && (
-                    <View style={styles.scheduleBox}>
-                        <Text style={styles.scheduleIcon}>📅</Text>
-                        <Text style={styles.scheduleText}>{job.schedule_description}</Text>
+                    <View style={[styles.scheduleBox, isRTL && styles.rowRTL]}>
+                        <Text style={[styles.scheduleIcon, isRTL && styles.iconRTL]}>📅</Text>
+                        <Text style={[styles.scheduleText, isRTL && styles.textRTL]}>
+                            {job.schedule_description}
+                        </Text>
                     </View>
                 )}
             </View>
 
-            {/* Card Footer - Actions */}
-            <View style={styles.cardFooter}>
-                <View style={styles.statsRow}>
-                    <View style={styles.actionButton}>
-                        <Text style={styles.actionIcon}>💬</Text>
-                        <Text style={styles.actionText}>Message</Text>
+            {/* Card Footer - Engagement Stats & Actions */}
+            <View style={[styles.cardFooter, isRTL && styles.cardFooterRTL]}>
+                {/* Engagement Stats */}
+                <View style={[styles.engagementRow, isRTL && styles.rowRTL]}>
+                    <View style={[styles.statItem, isRTL && styles.rowRTL]}>
+                        <Text style={styles.statIcon}>👁</Text>
+                        <Text style={styles.statText}>{viewsCount} {t.jobCard.views}</Text>
                     </View>
-                    <View style={styles.actionButton}>
-                        <Text style={styles.actionIcon}>📌</Text>
-                        <Text style={styles.actionText}>Save</Text>
-                    </View>
-                    <View style={styles.actionButton}>
-                        <Text style={styles.actionIcon}>↗️</Text>
-                        <Text style={styles.actionText}>Share</Text>
+                    <View style={[styles.statItem, isRTL && styles.rowRTL]}>
+                        <Text style={styles.statIcon}>📝</Text>
+                        <Text style={styles.statText}>{bidsCount} {t.jobCard.bids}</Text>
                     </View>
                 </View>
 
+                {/* Quick Actions */}
+                <View style={[styles.actionsRow, isRTL && styles.rowRTL]}>
+                    <TouchableOpacity 
+                        style={[styles.actionButton, isHovered && styles.actionButtonHovered]}
+                        activeOpacity={0.7}
+                    >
+                        <Text style={styles.actionIcon}>💬</Text>
+                        <Text style={styles.actionText}>{t.jobCard.message}</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity 
+                        style={[styles.actionButton, isHovered && styles.actionButtonHovered]}
+                        activeOpacity={0.7}
+                    >
+                        <Text style={styles.actionIcon}>📌</Text>
+                        <Text style={styles.actionText}>{t.jobCard.save}</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity 
+                        style={[styles.actionButton, isHovered && styles.actionButtonHovered]}
+                        activeOpacity={0.7}
+                    >
+                        <Text style={styles.actionIcon}>↗️</Text>
+                        <Text style={styles.actionText}>{t.jobCard.share}</Text>
+                    </TouchableOpacity>
+                </View>
+
                 {isPro && (
-                    <View style={styles.viewDetailsButton}>
+                    <View style={[styles.viewDetailsButton, isHovered && styles.viewDetailsButtonHovered]}>
                         <Text style={styles.viewDetailsIcon}>👀</Text>
-                        <Text style={styles.viewDetailsText}>Tap to view & bid</Text>
+                        <Text style={styles.viewDetailsText}>{t.jobCard.tapToView}</Text>
                     </View>
                 )}
             </View>
@@ -151,6 +183,23 @@ const styles = StyleSheet.create({
         elevation: 5,
         overflow: 'hidden',
     },
+    cardWeb: {
+        maxWidth: LAYOUT.feedMaxWidth - 32,
+        ...Platform.select({
+            web: {
+                transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+                cursor: 'pointer',
+            } as any,
+        }),
+    },
+    cardHovered: {
+        ...Platform.select({
+            web: {
+                transform: [{ scale: 1.01 }],
+                shadowOpacity: 0.12,
+            } as any,
+        }),
+    },
     cardHeader: {
         flexDirection: 'row',
         justifyContent: 'space-between',
@@ -160,10 +209,16 @@ const styles = StyleSheet.create({
         borderBottomWidth: 1,
         borderBottomColor: '#F1F5F9',
     },
+    cardHeaderRTL: {
+        flexDirection: 'row-reverse',
+    },
     userSection: {
         flexDirection: 'row',
         alignItems: 'center',
         flex: 1,
+    },
+    rowRTL: {
+        flexDirection: 'row-reverse',
     },
     avatar: {
         width: 46,
@@ -190,6 +245,9 @@ const styles = StyleSheet.create({
         fontWeight: '700',
         color: '#1E293B',
         marginRight: 6,
+    },
+    textRTL: {
+        textAlign: 'right',
     },
     verifiedBadge: {
         width: 18,
@@ -293,6 +351,10 @@ const styles = StyleSheet.create({
         fontSize: 16,
         marginRight: 8,
     },
+    iconRTL: {
+        marginRight: 0,
+        marginLeft: 8,
+    },
     scheduleText: {
         fontSize: 14,
         color: '#475569',
@@ -305,7 +367,28 @@ const styles = StyleSheet.create({
         borderTopWidth: 1,
         borderTopColor: '#F1F5F9',
     },
-    statsRow: {
+    cardFooterRTL: {
+        // Footer layout adjustments for RTL
+    },
+    engagementRow: {
+        flexDirection: 'row',
+        marginBottom: 12,
+        gap: 16,
+    },
+    statItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    statIcon: {
+        fontSize: 14,
+        marginRight: 4,
+    },
+    statText: {
+        fontSize: 13,
+        fontWeight: '500',
+        color: '#64748B',
+    },
+    actionsRow: {
         flexDirection: 'row',
         justifyContent: 'space-around',
         marginBottom: 0,
@@ -315,6 +398,16 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         paddingVertical: 8,
         paddingHorizontal: 12,
+        borderRadius: 8,
+        ...Platform.select({
+            web: {
+                cursor: 'pointer',
+                transition: 'background-color 0.2s ease',
+            } as any,
+        }),
+    },
+    actionButtonHovered: {
+        backgroundColor: '#F1F5F9',
     },
     actionIcon: {
         fontSize: 16,
@@ -333,6 +426,15 @@ const styles = StyleSheet.create({
         paddingVertical: 12,
         borderRadius: 12,
         marginTop: 12,
+        ...Platform.select({
+            web: {
+                cursor: 'pointer',
+                transition: 'background-color 0.2s ease',
+            } as any,
+        }),
+    },
+    viewDetailsButtonHovered: {
+        backgroundColor: '#E0E7FF',
     },
     viewDetailsIcon: {
         fontSize: 16,

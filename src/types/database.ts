@@ -10,6 +10,11 @@ export interface Profile {
     avatar_url?: string;
     created_at: string;
     updated_at: string;
+    // Pro profile fields (optional)
+    specializations?: JobCategory[];
+    completed_jobs_count?: number;
+    average_rating?: number;
+    bio?: string;
 }
 
 export interface Job {
@@ -25,6 +30,9 @@ export interface Job {
     schedule_description?: string;
     allow_counter_offers: boolean;
     status: JobStatus;
+    // Engagement fields
+    views_count?: number;
+    saves_count?: number;
     // Relations
     profile?: Profile;
     bids?: Bid[];

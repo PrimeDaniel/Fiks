@@ -5,6 +5,7 @@ import CreateJobScreen from '../screens/CreateJobScreen';
 import LoginScreen from '../screens/LoginScreen';
 import JobDetailScreen from '../screens/JobDetailScreen';
 import MyJobsScreen from '../screens/MyJobsScreen';
+import ProProfileScreen from '../screens/ProProfileScreen';
 import { Job } from '../types/database';
 
 export type RootStackParamList = {
@@ -13,6 +14,7 @@ export type RootStackParamList = {
     Login: undefined;
     JobDetail: { job: Job };
     MyJobs: undefined;
+    ProProfile: { proId: string };
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -69,6 +71,14 @@ const AppNavigator = () => {
                 component={MyJobsScreen} 
                 options={{ 
                     title: 'My Jobs',
+                    headerBackTitle: 'Back',
+                }} 
+            />
+            <Stack.Screen 
+                name="ProProfile" 
+                component={ProProfileScreen} 
+                options={{ 
+                    title: 'Pro Profile',
                     headerBackTitle: 'Back',
                 }} 
             />

@@ -16,6 +16,8 @@ import { useFocusEffect } from '@react-navigation/native';
 import { RootStackParamList } from '../navigation/AppNavigator';
 import { supabase } from '../services/supabase';
 import { Job, Bid, Profile } from '../types/database';
+import { useTranslation, getTimeAgoTranslation, getCategoryTranslation, getStatusTranslation } from '../i18n';
+import { useResponsive, LAYOUT } from '../utils/responsive';
 
 type MyJobsScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'MyJobs'>;
 
@@ -41,21 +43,7 @@ const getAvatarColor = (name: string): string => {
     return colors[index];
 };
 
-const getTimeAgo = (dateString: string): string => {
-    const now = new Date();
-    const date = new Date(dateString);
-    const diffMs = now.getTime() - date.getTime();
-    const diffMins = Math.floor(diffMs / 60000);
-    const diffHours = Math.floor(diffMs / 3600000);
-    const diffDays = Math.floor(diffMs / 86400000);
-
-    if (diffMins < 1) return 'Just now';
-    if (diffMins < 60) return `${diffMins}m ago`;
-    if (diffHours < 24) return `${diffHours}h ago`;
-    return `${diffDays}d ago`;
-};
-
-// Mock data for testing without Supabase
+// Mock data for testing
 const MOCK_MY_JOBS: JobWithBids[] = [
     {
         id: 'my-job-1',
@@ -96,7 +84,7 @@ const MOCK_MY_JOBS: JobWithBids[] = [
                 pro_id: 'pro-2',
                 price: 80,
                 status: 'Pending',
-                message: 'Experienced plumber here. I can help!',
+                message: 'Experienced plumber here!',
                 profile: {
                     id: 'pro-2',
                     full_name: 'Maria Expert',
@@ -125,6 +113,9 @@ const MOCK_MY_JOBS: JobWithBids[] = [
 ];
 
 const MyJobsScreen: React.FC<Props> = ({ navigation }) => {
+    const { t, isRTL } = useTranslation();
+    const responsive = useResponsive();
+    
     const [jobs, setJobs] = useState<JobWithBids[]>([]);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
@@ -142,7 +133,6 @@ const MyJobsScreen: React.FC<Props> = ({ navigation }) => {
                 return;
             }
 
-            // Fetch user's jobs with bids
             const { data, error } = await supabase
                 .from('jobs')
                 .select(`
@@ -159,7 +149,6 @@ const MyJobsScreen: React.FC<Props> = ({ navigation }) => {
                 console.warn('Using mock data:', error.message);
                 setJobs(MOCK_MY_JOBS);
             } else {
-                // Transform data to match our type
                 const transformedJobs = (data || []).map(job => ({
                     ...job,
                     bids: (job.bids || []).map((bid: any) => ({
@@ -189,48 +178,43 @@ const MyJobsScreen: React.FC<Props> = ({ navigation }) => {
         fetchMyJobs();
     };
 
-    const handleApproveBid = async (bid: Bid, job: JobWithBids) => {
+    const handleApproveBid = async (bid: Bid & { profile?: Profile }, job: JobWithBids) => {
         Alert.alert(
-            '✅ Approve Bid',
-            `Approve ${bid.profile?.full_name}'s offer of $${bid.price}?`,
+            t.myJobs.approveBid,
+            t.myJobs.approveQuestion.replace('{name}', bid.profile?.full_name || 'Pro').replace('{price}', String(bid.price)),
             [
-                { text: 'Cancel', style: 'cancel' },
+                { text: t.common.cancel, style: 'cancel' },
                 {
-                    text: 'Approve',
+                    text: t.myJobs.approve,
                     style: 'default',
                     onPress: async () => {
                         setProcessingBid(bid.id);
                         try {
-                            // Update the approved bid
-                            const { error: bidError } = await supabase
+                            await supabase
                                 .from('bids')
                                 .update({ status: 'Accepted' })
                                 .eq('id', bid.id);
 
-                            if (bidError) throw bidError;
-
-                            // Reject other bids for this job
                             await supabase
                                 .from('bids')
                                 .update({ status: 'Rejected' })
                                 .eq('job_id', job.id)
                                 .neq('id', bid.id);
 
-                            // Update job status
                             await supabase
                                 .from('jobs')
                                 .update({ status: 'In Progress' })
                                 .eq('id', job.id);
 
                             Alert.alert(
-                                '🎉 Success!',
-                                `You've approved ${bid.profile?.full_name}'s bid. They'll be notified shortly.`
+                                t.myJobs.success,
+                                t.myJobs.approvedMessage.replace('{name}', bid.profile?.full_name || 'Pro')
                             );
                             
                             fetchMyJobs();
                         } catch (error: any) {
                             console.error('Error approving bid:', error);
-                            Alert.alert('Error', 'Failed to approve bid. Please try again.');
+                            Alert.alert(t.common.error, 'Failed to approve bid.');
                         } finally {
                             setProcessingBid(null);
                         }
@@ -240,29 +224,27 @@ const MyJobsScreen: React.FC<Props> = ({ navigation }) => {
         );
     };
 
-    const handleRejectBid = async (bid: Bid) => {
+    const handleRejectBid = async (bid: Bid & { profile?: Profile }) => {
         Alert.alert(
-            '❌ Reject Bid',
-            `Reject ${bid.profile?.full_name}'s offer?`,
+            t.myJobs.rejectBid,
+            t.myJobs.rejectQuestion.replace('{name}', bid.profile?.full_name || 'Pro'),
             [
-                { text: 'Cancel', style: 'cancel' },
+                { text: t.common.cancel, style: 'cancel' },
                 {
-                    text: 'Reject',
+                    text: t.myJobs.decline,
                     style: 'destructive',
                     onPress: async () => {
                         setProcessingBid(bid.id);
                         try {
-                            const { error } = await supabase
+                            await supabase
                                 .from('bids')
                                 .update({ status: 'Rejected' })
                                 .eq('id', bid.id);
-
-                            if (error) throw error;
                             
                             fetchMyJobs();
                         } catch (error: any) {
                             console.error('Error rejecting bid:', error);
-                            Alert.alert('Error', 'Failed to reject bid. Please try again.');
+                            Alert.alert(t.common.error, 'Failed to reject bid.');
                         } finally {
                             setProcessingBid(null);
                         }
@@ -276,43 +258,46 @@ const MyJobsScreen: React.FC<Props> = ({ navigation }) => {
         const avatarColor = getAvatarColor(bid.profile?.full_name || 'P');
         const initials = bid.profile?.full_name?.split(' ').map(n => n[0]).join('').toUpperCase() || 'P';
         const isProcessing = processingBid === bid.id;
+        const timeAgo = getTimeAgoTranslation(t, bid.created_at);
 
-        const statusConfig: Record<string, { color: string; bgColor: string; label: string }> = {
-            'Pending': { color: '#F59E0B', bgColor: '#FFFBEB', label: 'Pending' },
-            'Accepted': { color: '#10B981', bgColor: '#ECFDF5', label: 'Approved' },
-            'Rejected': { color: '#EF4444', bgColor: '#FEF2F2', label: 'Rejected' },
+        const statusConfig: Record<string, { color: string; bgColor: string }> = {
+            'Pending': { color: '#F59E0B', bgColor: '#FFFBEB' },
+            'Accepted': { color: '#10B981', bgColor: '#ECFDF5' },
+            'Rejected': { color: '#EF4444', bgColor: '#FEF2F2' },
         };
         const config = statusConfig[bid.status];
 
         return (
             <View key={bid.id} style={styles.bidCard}>
-                <View style={styles.bidHeader}>
+                <View style={[styles.bidHeader, isRTL && styles.rowRTL]}>
                     <View style={[styles.bidAvatar, { backgroundColor: avatarColor }]}>
                         <Text style={styles.bidAvatarText}>{initials}</Text>
                     </View>
                     <View style={styles.bidInfo}>
-                        <View style={styles.bidNameRow}>
-                            <Text style={styles.bidProName}>{bid.profile?.full_name || 'Pro'}</Text>
+                        <View style={[styles.bidNameRow, isRTL && styles.rowRTL]}>
+                            <Text style={[styles.bidProName, isRTL && styles.textRTL]}>
+                                {bid.profile?.full_name || 'Pro'}
+                            </Text>
                             <View style={styles.proBadge}>
-                                <Text style={styles.proBadgeText}>⭐ Pro</Text>
+                                <Text style={styles.proBadgeText}>⭐ {t.myJobs.pro}</Text>
                             </View>
                         </View>
-                        <Text style={styles.bidTime}>{getTimeAgo(bid.created_at)}</Text>
+                        <Text style={[styles.bidTime, isRTL && styles.textRTL]}>{timeAgo}</Text>
                     </View>
-                    <View style={styles.bidPriceContainer}>
+                    <View style={[styles.bidPriceContainer, isRTL && styles.rowRTL]}>
                         <Text style={styles.bidPriceCurrency}>$</Text>
                         <Text style={styles.bidPrice}>{bid.price}</Text>
                     </View>
                 </View>
 
                 {bid.message && (
-                    <View style={styles.bidMessageBox}>
-                        <Text style={styles.bidMessage}>"{bid.message}"</Text>
+                    <View style={[styles.bidMessageBox, isRTL && styles.bidMessageBoxRTL]}>
+                        <Text style={[styles.bidMessage, isRTL && styles.textRTL]}>"{bid.message}"</Text>
                     </View>
                 )}
 
                 {bid.status === 'Pending' ? (
-                    <View style={styles.bidActions}>
+                    <View style={[styles.bidActions, isRTL && styles.rowRTL]}>
                         <TouchableOpacity
                             style={styles.rejectButton}
                             onPress={() => handleRejectBid(bid)}
@@ -321,11 +306,11 @@ const MyJobsScreen: React.FC<Props> = ({ navigation }) => {
                             {isProcessing ? (
                                 <ActivityIndicator size="small" color="#EF4444" />
                             ) : (
-                                <Text style={styles.rejectButtonText}>Decline</Text>
+                                <Text style={styles.rejectButtonText}>{t.myJobs.decline}</Text>
                             )}
                         </TouchableOpacity>
                         <TouchableOpacity
-                            style={styles.approveButton}
+                            style={[styles.approveButton, isRTL && styles.rowRTL]}
                             onPress={() => handleApproveBid(bid, job)}
                             disabled={isProcessing}
                         >
@@ -334,7 +319,7 @@ const MyJobsScreen: React.FC<Props> = ({ navigation }) => {
                             ) : (
                                 <>
                                     <Text style={styles.approveButtonIcon}>✓</Text>
-                                    <Text style={styles.approveButtonText}>Approve</Text>
+                                    <Text style={styles.approveButtonText}>{t.myJobs.approve}</Text>
                                 </>
                             )}
                         </TouchableOpacity>
@@ -342,7 +327,7 @@ const MyJobsScreen: React.FC<Props> = ({ navigation }) => {
                 ) : (
                     <View style={[styles.bidStatusBadge, { backgroundColor: config.bgColor }]}>
                         <Text style={[styles.bidStatusText, { color: config.color }]}>
-                            {config.label}
+                            {getStatusTranslation(t, bid.status)}
                         </Text>
                     </View>
                 )}
@@ -364,38 +349,42 @@ const MyJobsScreen: React.FC<Props> = ({ navigation }) => {
         return (
             <View style={styles.jobCard}>
                 {/* Job Header */}
-                <View style={styles.jobHeader}>
-                    <View style={styles.jobTitleRow}>
+                <View style={[styles.jobHeader, isRTL && styles.rowRTL]}>
+                    <View style={[styles.jobTitleRow, isRTL && styles.rowRTL]}>
                         <Text style={styles.categoryIcon}>{categoryConfig.icon}</Text>
-                        <Text style={styles.jobTitle} numberOfLines={1}>{item.title}</Text>
+                        <Text style={[styles.jobTitle, isRTL && styles.textRTL]} numberOfLines={1}>
+                            {item.title}
+                        </Text>
                     </View>
                     <View style={[styles.statusBadge, { backgroundColor: jobStatusConfig.bgColor }]}>
                         <Text style={[styles.statusText, { color: jobStatusConfig.color }]}>
-                            {item.status}
+                            {getStatusTranslation(t, item.status)}
                         </Text>
                     </View>
                 </View>
 
                 {/* Job Details */}
                 <View style={styles.jobDetails}>
-                    <View style={styles.jobPriceRow}>
-                        <Text style={styles.jobPriceLabel}>Your budget:</Text>
+                    <View style={[styles.jobPriceRow, isRTL && styles.rowRTL]}>
+                        <Text style={[styles.jobPriceLabel, isRTL && styles.textRTL]}>
+                            {t.myJobs.yourBudget}:
+                        </Text>
                         <Text style={styles.jobPrice}>${item.price_offer}</Text>
                     </View>
-                    <Text style={styles.jobDescription} numberOfLines={2}>
+                    <Text style={[styles.jobDescription, isRTL && styles.textRTL]} numberOfLines={2}>
                         {item.description}
                     </Text>
                 </View>
 
                 {/* Bids Section */}
                 <View style={styles.bidsSection}>
-                    <View style={styles.bidsSectionHeader}>
-                        <Text style={styles.bidsSectionTitle}>
-                            📬 Incoming Bids
+                    <View style={[styles.bidsSectionHeader, isRTL && styles.rowRTL]}>
+                        <Text style={[styles.bidsSectionTitle, isRTL && styles.textRTL]}>
+                            {t.myJobs.incomingBids}
                         </Text>
                         {pendingBids > 0 && (
                             <View style={styles.pendingBadge}>
-                                <Text style={styles.pendingBadgeText}>{pendingBids} new</Text>
+                                <Text style={styles.pendingBadgeText}>{pendingBids} {t.myJobs.newBids}</Text>
                             </View>
                         )}
                     </View>
@@ -403,9 +392,11 @@ const MyJobsScreen: React.FC<Props> = ({ navigation }) => {
                     {item.bids.length === 0 ? (
                         <View style={styles.noBidsContainer}>
                             <Text style={styles.noBidsIcon}>🔍</Text>
-                            <Text style={styles.noBidsText}>No bids yet</Text>
-                            <Text style={styles.noBidsSubtext}>
-                                Pros will start bidding soon
+                            <Text style={[styles.noBidsText, isRTL && styles.textRTL]}>
+                                {t.myJobs.noBidsYet}
+                            </Text>
+                            <Text style={[styles.noBidsSubtext, isRTL && styles.textRTL]}>
+                                {t.myJobs.prosWillBid}
                             </Text>
                         </View>
                     ) : (
@@ -420,7 +411,7 @@ const MyJobsScreen: React.FC<Props> = ({ navigation }) => {
         return (
             <View style={styles.loadingContainer}>
                 <ActivityIndicator size="large" color="#6366F1" />
-                <Text style={styles.loadingText}>Loading your jobs...</Text>
+                <Text style={[styles.loadingText, isRTL && styles.textRTL]}>{t.common.loading}</Text>
             </View>
         );
     }
@@ -429,15 +420,15 @@ const MyJobsScreen: React.FC<Props> = ({ navigation }) => {
         return (
             <View style={styles.emptyContainer}>
                 <Text style={styles.emptyIcon}>🔐</Text>
-                <Text style={styles.emptyTitle}>Sign In Required</Text>
-                <Text style={styles.emptyText}>
-                    Please sign in to view your posted jobs and manage bids.
+                <Text style={[styles.emptyTitle, isRTL && styles.textRTL]}>{t.myJobs.signInRequired}</Text>
+                <Text style={[styles.emptyText, isRTL && styles.textRTL]}>
+                    {t.myJobs.signInToView}
                 </Text>
                 <TouchableOpacity
                     style={styles.signInButton}
                     onPress={() => navigation.navigate('Login')}
                 >
-                    <Text style={styles.signInButtonText}>Sign In</Text>
+                    <Text style={styles.signInButtonText}>{t.nav.signIn}</Text>
                 </TouchableOpacity>
             </View>
         );
@@ -451,7 +442,10 @@ const MyJobsScreen: React.FC<Props> = ({ navigation }) => {
                 data={jobs}
                 keyExtractor={(item) => item.id}
                 renderItem={renderJobItem}
-                contentContainerStyle={styles.listContent}
+                contentContainerStyle={[
+                    styles.listContent,
+                    responsive.isWeb && !responsive.isMobile && styles.listContentWeb,
+                ]}
                 showsVerticalScrollIndicator={false}
                 refreshControl={
                     <RefreshControl
@@ -462,24 +456,24 @@ const MyJobsScreen: React.FC<Props> = ({ navigation }) => {
                 }
                 ListHeaderComponent={
                     <View style={styles.header}>
-                        <Text style={styles.headerTitle}>📋 My Jobs</Text>
-                        <Text style={styles.headerSubtitle}>
-                            Manage your posted jobs and review incoming bids
+                        <Text style={[styles.headerTitle, isRTL && styles.textRTL]}>{t.myJobs.title}</Text>
+                        <Text style={[styles.headerSubtitle, isRTL && styles.textRTL]}>
+                            {t.myJobs.subtitle}
                         </Text>
                     </View>
                 }
                 ListEmptyComponent={
                     <View style={styles.emptyContainer}>
                         <Text style={styles.emptyIcon}>📭</Text>
-                        <Text style={styles.emptyTitle}>No Jobs Posted</Text>
-                        <Text style={styles.emptyText}>
-                            Post your first job to start receiving bids from local pros!
+                        <Text style={[styles.emptyTitle, isRTL && styles.textRTL]}>{t.myJobs.noJobsPosted}</Text>
+                        <Text style={[styles.emptyText, isRTL && styles.textRTL]}>
+                            {t.myJobs.postFirstJob}
                         </Text>
                         <TouchableOpacity
                             style={styles.postJobButton}
                             onPress={() => navigation.navigate('CreateJob')}
                         >
-                            <Text style={styles.postJobButtonText}>+ Post a Job</Text>
+                            <Text style={styles.postJobButtonText}>+ {t.home.postJob}</Text>
                         </TouchableOpacity>
                     </View>
                 }
@@ -505,6 +499,13 @@ const styles = StyleSheet.create({
         color: '#64748B',
         fontWeight: '500',
     },
+    // RTL helpers
+    rowRTL: {
+        flexDirection: 'row-reverse',
+    },
+    textRTL: {
+        textAlign: 'right',
+    },
     header: {
         paddingHorizontal: 4,
         paddingTop: 8,
@@ -524,6 +525,11 @@ const styles = StyleSheet.create({
     listContent: {
         padding: 16,
         paddingBottom: 100,
+    },
+    listContentWeb: {
+        maxWidth: LAYOUT.feedMaxWidth,
+        alignSelf: 'center',
+        width: '100%',
     },
     jobCard: {
         backgroundColor: '#FFFFFF',
@@ -713,6 +719,11 @@ const styles = StyleSheet.create({
         marginTop: 12,
         borderLeftWidth: 3,
         borderLeftColor: '#6366F1',
+    },
+    bidMessageBoxRTL: {
+        borderLeftWidth: 0,
+        borderRightWidth: 3,
+        borderRightColor: '#6366F1',
     },
     bidMessage: {
         fontSize: 14,
