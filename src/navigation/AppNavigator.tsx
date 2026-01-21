@@ -1,5 +1,6 @@
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import LandingScreen from '../screens/LandingScreen';
 import HomeScreen from '../screens/HomeScreen';
 import CreateJobScreen from '../screens/CreateJobScreen';
 import LoginScreen from '../screens/LoginScreen';
@@ -10,6 +11,7 @@ import { Job } from '../types/database';
 import { COLORS, FONTS } from '../theme';
 
 export type RootStackParamList = {
+    Landing: undefined;
     Home: undefined;
     CreateJob: undefined;
     Login: undefined;
@@ -23,7 +25,7 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 const AppNavigator = () => {
     return (
         <Stack.Navigator
-            initialRouteName="Home"
+            initialRouteName="Landing"
             screenOptions={{
                 headerStyle: {
                     backgroundColor: COLORS.white,
@@ -40,6 +42,11 @@ const AppNavigator = () => {
                 },
             }}
         >
+            <Stack.Screen
+                name="Landing"
+                component={LandingScreen}
+                options={{ headerShown: false }}
+            />
             <Stack.Screen
                 name="Home"
                 component={HomeScreen}
