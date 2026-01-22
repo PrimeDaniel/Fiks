@@ -161,4 +161,78 @@ export interface Translations {
         categories: string;
         recentActivity: string;
     };
+    // Landing Page
+    landing: {
+        // Navbar
+        browseJobs: string;
+        signIn: string;
+        postAJob: string;
+        // Hero
+        heroTitle: string;
+        heroSubtitle: string;
+        heroTrustedBy: string;
+        findAPro: string;
+        becomeAPro: string;
+        verifiedPros: string;
+        avgRating: string;
+        responseTime: string;
+        // Pro Gallery
+        proGalleryLabel: string;
+        proGalleryTitle: string;
+        proGallerySubtitle: string;
+        electricalWork: string;
+        electricalDesc: string;
+        plumbingServices: string;
+        plumbingDesc: string;
+        furnitureAssembly: string;
+        furnitureDesc: string;
+        // Features
+        featuresLabel: string;
+        featuresTitle: string;
+        featuresSubtitle: string;
+        lightningFast: string;
+        lightningFastDesc: string;
+        verifiedProfessionals: string;
+        verifiedProfessionalsDesc: string;
+        localCommunity: string;
+        localCommunityDesc: string;
+        // How It Works
+        howItWorksLabel: string;
+        howItWorksTitle: string;
+        howItWorksSubtitle: string;
+        step1Title: string;
+        step1Desc: string;
+        step2Title: string;
+        step2Desc: string;
+        step3Title: string;
+        step3Desc: string;
+        // Stats
+        statsLabel: string;
+        statsTitle: string;
+        jobsCompleted: string;
+        happyCustomers: string;
+        verifiedProsCount: string;
+        citiesServed: string;
+        // Testimonials
+        testimonialsLabel: string;
+        testimonialsTitle: string;
+        testimonialsSubtitle: string;
+        // CTA
+        ctaTitle: string;
+        ctaSubtitle: string;
+        postJobNow: string;
+        ctaNote: string;
+        // Footer
+        footerTagline: string;
+        services: string;
+        company: string;
+        aboutUs: string;
+        howItWorks: string;
+        support: string;
+        helpCenter: string;
+        contactUs: string;
+        privacyPolicy: string;
+        copyright: string;
+    };
 }
+
