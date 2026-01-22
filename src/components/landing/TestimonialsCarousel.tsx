@@ -10,6 +10,7 @@ import {
     Image,
 } from 'react-native';
 import { COLORS, FONTS, SHADOWS } from '../../theme';
+import { useTranslation } from '../../i18n';
 import { StarIcon, QuoteIcon } from '../icons/Icons';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -113,6 +114,7 @@ const TestimonialCard: React.FC<{ testimonial: Testimonial; isRTL?: boolean }> =
  * Features: Star ratings, customer photos, smooth animations
  */
 const TestimonialsCarousel: React.FC<TestimonialsCarouselProps> = ({ isRTL = false }) => {
+    const { t } = useTranslation();
     const [activeIndex, setActiveIndex] = useState(0);
     const scrollX = useRef(new Animated.Value(0)).current;
 
@@ -130,12 +132,12 @@ const TestimonialsCarousel: React.FC<TestimonialsCarouselProps> = ({ isRTL = fal
     return (
         <View style={styles.container}>
             <View style={styles.headerContainer}>
-                <Text style={[styles.sectionLabel, isRTL && styles.textRTL]}>TESTIMONIALS</Text>
+                <Text style={[styles.sectionLabel, isRTL && styles.textRTL]}>{t.landing.testimonialsLabel}</Text>
                 <Text style={[styles.sectionTitle, isRTL && styles.textRTL]}>
-                    What Our Customers Say
+                    {t.landing.testimonialsTitle}
                 </Text>
                 <Text style={[styles.sectionSubtitle, isRTL && styles.textRTL]}>
-                    Real stories from real customers who found their perfect pro
+                    {t.landing.testimonialsSubtitle}
                 </Text>
             </View>
 

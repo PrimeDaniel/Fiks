@@ -8,6 +8,7 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { COLORS, FONTS } from '../../theme';
+import { useTranslation } from '../../i18n';
 import { ArrowRightIcon } from '../icons/Icons';
 
 interface CTABannerProps {
@@ -20,6 +21,8 @@ interface CTABannerProps {
  * Features: Compelling headline, gradient background, prominent button
  */
 const CTABanner: React.FC<CTABannerProps> = ({ onGetStarted, isRTL = false }) => {
+    const { t } = useTranslation();
+
     return (
         <LinearGradient
             colors={['#8B5CF6', '#7C3AED', '#EC4899']}
@@ -33,23 +36,23 @@ const CTABanner: React.FC<CTABannerProps> = ({ onGetStarted, isRTL = false }) =>
 
             <View style={styles.content}>
                 <Text style={[styles.ctaTitle, isRTL && styles.textRTL]}>
-                    Ready to Get Started?
+                    {t.landing.ctaTitle}
                 </Text>
                 <Text style={[styles.ctaSubtitle, isRTL && styles.textRTL]}>
-                    Post your first job for free and find your perfect pro today
+                    {t.landing.ctaSubtitle}
                 </Text>
 
                 <TouchableOpacity
-                    style={styles.ctaButton}
+                    style={[styles.ctaButton, isRTL && styles.ctaButtonRTL]}
                     onPress={onGetStarted}
                     activeOpacity={0.9}
                 >
-                    <Text style={styles.ctaButtonText}>Post a Job Now</Text>
+                    <Text style={styles.ctaButtonText}>{t.landing.postJobNow}</Text>
                     <ArrowRightIcon size={20} color="#8B5CF6" />
                 </TouchableOpacity>
 
                 <Text style={[styles.ctaNote, isRTL && styles.textRTL]}>
-                    No credit card required • Free to post
+                    {t.landing.ctaNote}
                 </Text>
             </View>
         </LinearGradient>
@@ -123,6 +126,9 @@ const styles = StyleSheet.create({
                 transition: 'all 0.2s ease',
             } as any,
         }),
+    },
+    ctaButtonRTL: {
+        flexDirection: 'row-reverse',
     },
     ctaButtonText: {
         fontSize: 18,
