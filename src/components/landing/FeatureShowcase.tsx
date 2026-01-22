@@ -7,6 +7,7 @@ import {
     Dimensions,
 } from 'react-native';
 import { COLORS, FONTS, SHADOWS } from '../../theme';
+import { useTranslation } from '../../i18n';
 import { LightningIcon, ShieldIcon, UsersIcon } from '../icons/Icons';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -47,23 +48,25 @@ const FeatureCard: React.FC<FeatureCardProps> = ({
  * Features: Hover lift animations, consistent icon styling, benefit-focused copy
  */
 const FeatureShowcase: React.FC<FeatureShowcaseProps> = ({ isRTL = false }) => {
+    const { t } = useTranslation();
+
     const features = [
         {
             icon: <LightningIcon size={28} color="#8B5CF6" />,
-            title: 'Lightning Fast',
-            description: 'Post a job and receive bids from qualified pros within hours, not days.',
+            title: t.landing.lightningFast,
+            description: t.landing.lightningFastDesc,
             accentColor: '#8B5CF6',
         },
         {
             icon: <ShieldIcon size={28} color="#10B981" />,
-            title: 'Verified Professionals',
-            description: 'Every pro is background-checked and verified for your peace of mind.',
+            title: t.landing.verifiedProfessionals,
+            description: t.landing.verifiedProfessionalsDesc,
             accentColor: '#10B981',
         },
         {
             icon: <UsersIcon size={28} color="#0369A1" />,
-            title: 'Local Community',
-            description: 'Support local professionals in your area and build lasting relationships.',
+            title: t.landing.localCommunity,
+            description: t.landing.localCommunityDesc,
             accentColor: '#0369A1',
         },
     ];
@@ -71,12 +74,12 @@ const FeatureShowcase: React.FC<FeatureShowcaseProps> = ({ isRTL = false }) => {
     return (
         <View style={styles.container}>
             <View style={styles.headerContainer}>
-                <Text style={[styles.sectionLabel, isRTL && styles.textRTL]}>WHY CHOOSE FIKS</Text>
+                <Text style={[styles.sectionLabel, isRTL && styles.textRTL]}>{t.landing.featuresLabel}</Text>
                 <Text style={[styles.sectionTitle, isRTL && styles.textRTL]}>
-                    Built for Speed, Trust & Quality
+                    {t.landing.featuresTitle}
                 </Text>
                 <Text style={[styles.sectionSubtitle, isRTL && styles.textRTL]}>
-                    We've made it simple to find the right professional for every job
+                    {t.landing.featuresSubtitle}
                 </Text>
             </View>
 

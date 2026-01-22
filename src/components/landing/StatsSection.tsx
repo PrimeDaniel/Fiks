@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import {
     StyleSheet,
     Text,
@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { COLORS, FONTS } from '../../theme';
+import { useTranslation } from '../../i18n';
 import { BriefcaseIcon, UsersIcon, StarIcon, MapPinIcon } from '../icons/Icons';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -95,30 +96,32 @@ const StatItem: React.FC<StatItemProps> = ({
  * Features: Count-up animation, gradient background, responsive grid
  */
 const StatsSection: React.FC<StatsSectionProps> = ({ isRTL = false }) => {
+    const { t } = useTranslation();
+
     const stats = [
         {
             icon: <BriefcaseIcon size={28} color="white" />,
             value: 50000,
             suffix: '+',
-            label: 'Jobs Completed',
+            label: t.landing.jobsCompleted,
         },
         {
             icon: <UsersIcon size={28} color="white" />,
             value: 10000,
             suffix: '+',
-            label: 'Happy Customers',
+            label: t.landing.happyCustomers,
         },
         {
             icon: <StarIcon size={28} color="white" />,
             value: 2500,
             suffix: '+',
-            label: 'Verified Pros',
+            label: t.landing.verifiedProsCount,
         },
         {
             icon: <MapPinIcon size={28} color="white" />,
             value: 150,
             suffix: '+',
-            label: 'Cities Served',
+            label: t.landing.citiesServed,
         },
     ];
 
@@ -135,9 +138,9 @@ const StatsSection: React.FC<StatsSectionProps> = ({ isRTL = false }) => {
 
             <View style={styles.content}>
                 <View style={styles.headerContainer}>
-                    <Text style={[styles.sectionLabel, isRTL && styles.textRTL]}>BY THE NUMBERS</Text>
+                    <Text style={[styles.sectionLabel, isRTL && styles.textRTL]}>{t.landing.statsLabel}</Text>
                     <Text style={[styles.sectionTitle, isRTL && styles.textRTL]}>
-                        Trusted by Thousands
+                        {t.landing.statsTitle}
                     </Text>
                 </View>
 

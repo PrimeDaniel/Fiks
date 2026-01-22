@@ -7,6 +7,7 @@ import {
     Dimensions,
 } from 'react-native';
 import { COLORS, FONTS, SHADOWS } from '../../theme';
+import { useTranslation } from '../../i18n';
 import { BriefcaseIcon, UsersIcon, CheckCircleIcon, ArrowRightIcon } from '../icons/Icons';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -66,21 +67,23 @@ const StepCard: React.FC<StepCardProps> = ({
  * Shows the journey: Post → Get Bids → Complete
  */
 const HowItWorks: React.FC<HowItWorksProps> = ({ isRTL = false }) => {
+    const { t } = useTranslation();
+
     const steps = [
         {
             icon: <BriefcaseIcon size={32} color="#8B5CF6" />,
-            title: 'Post Your Job',
-            description: 'Describe what you need done, set your budget, and upload photos if needed.',
+            title: t.landing.step1Title,
+            description: t.landing.step1Desc,
         },
         {
             icon: <UsersIcon size={32} color="#EC4899" />,
-            title: 'Get Bids from Pros',
-            description: 'Receive competitive bids from verified local professionals in your area.',
+            title: t.landing.step2Title,
+            description: t.landing.step2Desc,
         },
         {
             icon: <CheckCircleIcon size={32} color="#10B981" />,
-            title: 'Choose & Complete',
-            description: 'Compare reviews, pick your favorite pro, and get the job done right.',
+            title: t.landing.step3Title,
+            description: t.landing.step3Desc,
         },
     ];
 
@@ -90,12 +93,12 @@ const HowItWorks: React.FC<HowItWorksProps> = ({ isRTL = false }) => {
             <View style={styles.bgDecoration} />
 
             <View style={styles.headerContainer}>
-                <Text style={[styles.sectionLabel, isRTL && styles.textRTL]}>HOW IT WORKS</Text>
+                <Text style={[styles.sectionLabel, isRTL && styles.textRTL]}>{t.landing.howItWorksLabel}</Text>
                 <Text style={[styles.sectionTitle, isRTL && styles.textRTL]}>
-                    Three Simple Steps
+                    {t.landing.howItWorksTitle}
                 </Text>
                 <Text style={[styles.sectionSubtitle, isRTL && styles.textRTL]}>
-                    From posting to completion, we make it effortless
+                    {t.landing.howItWorksSubtitle}
                 </Text>
             </View>
 
