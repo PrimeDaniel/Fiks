@@ -123,26 +123,25 @@ const LandingHero: React.FC<LandingHeroProps> = ({ onFindPro, onBecomePro, isRTL
             >
                 {/* Badge */}
                 <View style={[styles.badge, isRTL && styles.badgeRTL]}>
-                    <Text style={styles.badgeText}>✨ Trusted by 10,000+ customers</Text>
+                    <Text style={styles.badgeText}>✨ {t.landing.heroTrustedBy}</Text>
                 </View>
 
                 {/* Main headline */}
                 <Text style={[styles.heroTitle, isRTL && styles.textRTL]}>
-                    Find Local Pros{'\n'}in Minutes
+                    {t.landing.heroTitle}
                 </Text>
                 <Text style={[styles.heroSubtitle, isRTL && styles.textRTL]}>
-                    Connect with verified professionals for electricity, plumbing,
-                    assembly, moving, and painting services.
+                    {t.landing.heroSubtitle}
                 </Text>
 
                 {/* CTA Buttons */}
                 <View style={[styles.ctaContainer, isRTL && styles.ctaContainerRTL]}>
                     <TouchableOpacity
-                        style={styles.primaryCta}
+                        style={[styles.primaryCta, isRTL && styles.primaryCtaRTL]}
                         onPress={onFindPro}
                         activeOpacity={0.9}
                     >
-                        <Text style={styles.primaryCtaText}>Find a Pro</Text>
+                        <Text style={styles.primaryCtaText}>{t.landing.findAPro}</Text>
                         <ArrowRightIcon size={20} color="#8B5CF6" />
                     </TouchableOpacity>
                     <TouchableOpacity
@@ -150,25 +149,25 @@ const LandingHero: React.FC<LandingHeroProps> = ({ onFindPro, onBecomePro, isRTL
                         onPress={onBecomePro}
                         activeOpacity={0.8}
                     >
-                        <Text style={styles.secondaryCtaText}>Become a Pro</Text>
+                        <Text style={styles.secondaryCtaText}>{t.landing.becomeAPro}</Text>
                     </TouchableOpacity>
                 </View>
 
                 {/* Trust indicators */}
                 <View style={[styles.trustContainer, isRTL && styles.trustContainerRTL]}>
-                    <View style={styles.trustItem}>
+                    <View style={[styles.trustItem, isRTL && styles.trustItemRTL]}>
                         <ShieldIcon size={16} color="rgba(255,255,255,0.9)" />
-                        <Text style={styles.trustText}>Verified Pros</Text>
+                        <Text style={styles.trustText}>{t.landing.verifiedPros}</Text>
                     </View>
                     <View style={styles.trustDivider} />
-                    <View style={styles.trustItem}>
+                    <View style={[styles.trustItem, isRTL && styles.trustItemRTL]}>
                         <StarIcon size={16} color="rgba(255,255,255,0.9)" />
-                        <Text style={styles.trustText}>4.9★ Average</Text>
+                        <Text style={styles.trustText}>{t.landing.avgRating}</Text>
                     </View>
                     <View style={styles.trustDivider} />
-                    <View style={styles.trustItem}>
+                    <View style={[styles.trustItem, isRTL && styles.trustItemRTL]}>
                         <ToolIcon size={16} color="rgba(255,255,255,0.9)" />
-                        <Text style={styles.trustText}>24hr Response</Text>
+                        <Text style={styles.trustText}>{t.landing.responseTime}</Text>
                     </View>
                 </View>
             </Animated.View>
@@ -336,6 +335,12 @@ const styles = StyleSheet.create({
         height: 16,
         backgroundColor: 'rgba(255,255,255,0.3)',
         marginHorizontal: 8,
+    },
+    primaryCtaRTL: {
+        flexDirection: 'row-reverse',
+    },
+    trustItemRTL: {
+        flexDirection: 'row-reverse',
     },
 });
 
