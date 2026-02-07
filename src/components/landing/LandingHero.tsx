@@ -179,7 +179,7 @@ const styles = StyleSheet.create({
     heroContainer: {
         minHeight: 520,
         paddingHorizontal: 24,
-        paddingTop: Platform.OS === 'ios' ? 80 : Platform.OS === 'web' ? 80 : 60,
+        paddingTop: 32,
         paddingBottom: 60,
         position: 'relative',
         overflow: 'hidden',

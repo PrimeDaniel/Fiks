@@ -1,7 +1,6 @@
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import LandingScreen from '../screens/LandingScreen';
-import HomeScreen from '../screens/HomeScreen';
+import MainScreen from '../screens/MainScreen';
 import CreateJobScreen from '../screens/CreateJobScreen';
 import LoginScreen from '../screens/LoginScreen';
 import JobDetailScreen from '../screens/JobDetailScreen';
@@ -44,12 +43,12 @@ const AppNavigator = () => {
         >
             <Stack.Screen
                 name="Landing"
-                component={LandingScreen}
+                component={MainScreen}
                 options={{ headerShown: false }}
             />
             <Stack.Screen
                 name="Home"
-                component={HomeScreen}
+                component={MainScreen}
                 options={{ headerShown: false }}
             />
             <Stack.Screen

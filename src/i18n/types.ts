@@ -161,6 +161,12 @@ export interface Translations {
         categories: string;
         recentActivity: string;
     };
+    // Main (unified landing + home)
+    main: {
+        scrollToExplore: string;
+        browseAvailableJobs: string;
+        browseAvailableJobsSubtitle: string;
+    };
     // Landing Page
     landing: {
         // Navbar

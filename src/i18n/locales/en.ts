@@ -150,6 +150,11 @@ export const en: Translations = {
         categories: 'Categories',
         recentActivity: 'Recent Activity',
     },
+    main: {
+        scrollToExplore: 'Scroll to explore',
+        browseAvailableJobs: 'Browse Available Jobs',
+        browseAvailableJobsSubtitle: 'Find local pros and post your job in minutes.',
+    },
     landing: {
         // Navbar
         browseJobs: 'Browse Jobs',

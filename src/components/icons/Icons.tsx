@@ -196,6 +196,21 @@ export const MapPinIcon: React.FC<IconProps> = ({ size = 24, color = '#0369A1' }
 );
 
 /**
+ * Chevron down icon - for scroll indicator
+ */
+export const ChevronDownIcon: React.FC<IconProps> = ({ size = 24, color = 'currentColor' }) => (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+        <Path
+            d="M6 9L12 15L18 9"
+            stroke={color}
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+        />
+    </Svg>
+);
+
+/**
  * Quote icon - for testimonials
  */
 export const QuoteIcon: React.FC<IconProps> = ({ size = 24, color = '#0369A1' }) => (

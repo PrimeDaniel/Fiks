@@ -150,6 +150,11 @@ export const he: Translations = {
         categories: 'קטגוריות',
         recentActivity: 'פעילות אחרונה',
     },
+    main: {
+        scrollToExplore: 'גלול לגלות',
+        browseAvailableJobs: 'עיין במשרות פנויות',
+        browseAvailableJobsSubtitle: 'מצא מקצוענים מקומיים ופרסם את העבודה שלך תוך דקות.',
+    },
     landing: {
         // Navbar
         browseJobs: 'עיין בג\'ובים',
